@@ -130,4 +130,34 @@ class AgendaTest extends TestCase
             ])
             ->assertForbidden();
     }
+
+    public function test_lists_where_dates_belong_are_refused_without_an_error_page(): void
+    {
+        $member = User::factory()->create();
+        $appointment = Appointment::factory()->for($member, 'responsible')->create();
+
+        $this->actingAs($member)
+            ->getJson('/agenda/eventos?start[]=x&end=2026-10-12T00:00:00Z')
+            ->assertUnprocessable();
+
+        $this->actingAs($member)
+            ->patchJson("/atendimentos/{$appointment->id}/horario", ['starts_at' => ['x'], 'ends_at' => '2026-10-06T16:30:00'])
+            ->assertUnprocessable();
+    }
+
+    public function test_browsing_the_agenda_does_not_use_up_the_drag_limit(): void
+    {
+        $member = User::factory()->create();
+        $appointment = Appointment::factory()->for($member, 'responsible')->between('2026-10-05 13:00', '2026-10-05 14:00')->create();
+        $this->actingAs($member);
+
+        foreach (range(1, 40) as $view) {
+            $this->getJson('/agenda/eventos?start=2026-10-05T00:00:00Z&end=2026-10-12T00:00:00Z')->assertOk();
+        }
+
+        $this->patchJson("/atendimentos/{$appointment->id}/horario", [
+            'starts_at' => '2026-10-06T15:00:00',
+            'ends_at' => '2026-10-06T16:00:00',
+        ])->assertNoContent();
+    }
 }

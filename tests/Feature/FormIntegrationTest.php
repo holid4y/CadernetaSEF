@@ -257,6 +257,13 @@ class FormIntegrationTest extends TestCase
             ->assertDontSee('https://forms.example.test/', false)->assertSee('Link indisponível');
     }
 
+    public function test_fields_sent_as_lists_are_a_validation_error(): void
+    {
+        $this->send($this->payload(['url' => ['https://forms.example.test/1'], 'title' => ['Ficha']]))->assertUnprocessable();
+
+        $this->assertDatabaseCount('external_forms', 0);
+    }
+
     private function payload(array $overrides = []): array
     {
         return array_replace([

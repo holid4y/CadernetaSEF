@@ -26,7 +26,7 @@ class FormEventRequest extends FormRequest
             'version' => ['required', 'integer', 'min:1', 'max:2147483647'],
             'status' => ['required', Rule::in(['pending', 'in_progress', 'completed', 'deleted'])],
             'title' => ['required', 'string', 'max:160', 'not_regex:/[\x00-\x1f\x7f]/'],
-            'url' => ['nullable', 'required_unless:status,deleted', 'string', 'max:2048', function ($attribute, $value, $fail): void {
+            'url' => ['bail', 'nullable', 'required_unless:status,deleted', 'string', 'max:2048', function ($attribute, $value, $fail): void {
                 if (! FormLinks::allowed($value)) {
                     $fail('O link precisa usar HTTPS em um domínio autorizado.');
                 }

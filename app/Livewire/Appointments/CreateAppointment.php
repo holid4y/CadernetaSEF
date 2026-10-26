@@ -65,7 +65,8 @@ class CreateAppointment extends Component
         $this->end_time = $endsAt->format('H:i');
         $this->responsible_user_id = Auth::user()->canWrite() ? Auth::id() : null;
 
-        if ($clientId !== null) {
+        // A link to an inactive or removed client opens the form without one.
+        if ($clientId !== null && Client::query()->active()->whereKey($clientId)->exists()) {
             $this->selectClient($clientId);
         }
     }

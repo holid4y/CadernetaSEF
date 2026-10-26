@@ -12,6 +12,7 @@ import {
     meiCount,
     peopleByMonth,
     thirdSectorCount,
+    toCsv,
     topDemands,
     uniqueClientsServed,
 } from '../js/queries.js';
@@ -109,4 +110,8 @@ test('CSV export has the headline numbers and escapes quotes', () => {
     assert.match(csv, /"Total de atendimentos";"7"/);
     assert.match(csv, /"Concluído";"4"/);
     assert.match(csv, /"Taxa de comparecimento";"80%"/);
+});
+
+test('CSV cells that look like spreadsheet formulas are kept as text', () => {
+    assert.equal(toCsv([['=HYPERLINK("x")', '+1', '-2', '@SUM(A1)', 'Normal', 5]]), `"'=HYPERLINK(""x"")";"'+1";"'-2";"'@SUM(A1)";"Normal";"5"`);
 });

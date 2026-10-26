@@ -21,6 +21,14 @@ class LoginRequest extends FormRequest
         return true;
     }
 
+    // Accounts are stored in lower case: "Maria@Feevale.br" is the same person.
+    protected function prepareForValidation(): void
+    {
+        if (is_string($this->input('email'))) {
+            $this->merge(['email' => mb_strtolower(trim($this->input('email')))]);
+        }
+    }
+
     public function rules(): array
     {
         return [

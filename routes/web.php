@@ -21,7 +21,7 @@ Route::get('/', function () {
         : redirect()->route('login');
 })->name('home');
 
-Route::middleware(['signed', 'throttle:20,1'])->controller(ReminderResponseController::class)->group(function () {
+Route::middleware(['signed', 'throttle:20,1,reminder-response'])->controller(ReminderResponseController::class)->group(function () {
     Route::get('/confirmacao/{appointment}', 'show')->name('appointments.respond');
     Route::post('/confirmacao/{appointment}', 'store');
 });
@@ -29,7 +29,7 @@ Route::middleware(['signed', 'throttle:20,1'])->controller(ReminderResponseContr
 Route::middleware('auth')->group(function () {
     Route::get('/integracoes/formularios', [FormReviewController::class, 'index'])->name('forms.review');
     Route::post('/integracoes/formularios/{externalForm}/vincular', [FormReviewController::class, 'store'])
-        ->middleware('throttle:30,1')->name('forms.link');
+        ->middleware('throttle:30,1,forms-link')->name('forms.link');
 
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
 
@@ -38,8 +38,8 @@ Route::middleware('auth')->group(function () {
 
     Route::controller(AgendaController::class)->group(function () {
         Route::get('/agenda', 'index')->name('agenda')->can('viewAny', Appointment::class);
-        Route::get('/agenda/eventos', 'events')->name('agenda.events')->can('viewAny', Appointment::class)->middleware('throttle:120,1');
-        Route::patch('/atendimentos/{appointment}/horario', 'reschedule')->name('appointments.reschedule')->middleware('throttle:30,1');
+        Route::get('/agenda/eventos', 'events')->name('agenda.events')->can('viewAny', Appointment::class)->middleware('throttle:120,1,agenda-events');
+        Route::patch('/atendimentos/{appointment}/horario', 'reschedule')->name('appointments.reschedule')->middleware('throttle:30,1,agenda-reschedule');
     });
 
     Route::controller(AppointmentController::class)->group(function () {

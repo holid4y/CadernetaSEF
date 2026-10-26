@@ -406,4 +406,12 @@ class MobileCommandTest extends TestCase
     {
         return Carbon::parse($utc, 'UTC')->getTimestampMs();
     }
+
+    public function test_lists_in_client_fields_are_a_validation_error(): void
+    {
+        $this->command('saveClient', [['type' => ['x'], 'name' => ['y'], 'phone' => ['z'], 'document' => ['1']], null])
+            ->assertUnprocessable();
+
+        $this->assertDatabaseCount('clients', 0);
+    }
 }

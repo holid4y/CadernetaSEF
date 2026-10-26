@@ -72,4 +72,35 @@ class PasswordResetTest extends TestCase
             return true;
         });
     }
+
+    public function test_the_link_is_sent_whatever_the_case_of_the_e_mail(): void
+    {
+        Notification::fake();
+        $user = User::factory()->create(['email' => 'maria@feevale.br']);
+
+        $this->post('/forgot-password', ['email' => ' Maria@Feevale.BR ']);
+
+        Notification::assertSentTo($user, ResetPassword::class);
+    }
+
+    public function test_the_reset_e_mail_is_in_portuguese(): void
+    {
+        $user = User::factory()->create();
+
+        $mail = (new ResetPassword('token'))->toMail($user);
+
+        $this->assertSame('Redefinir sua senha', $mail->subject);
+        $this->assertSame('Redefinir senha', $mail->actionText);
+    }
+
+    public function test_repeated_requests_from_one_address_are_slowed_down(): void
+    {
+        Notification::fake();
+
+        foreach (range(1, 6) as $attempt) {
+            $this->post('/forgot-password', ['email' => "pessoa{$attempt}@feevale.br"]);
+        }
+
+        $this->post('/forgot-password', ['email' => 'outra@feevale.br'])->assertTooManyRequests();
+    }
 }
