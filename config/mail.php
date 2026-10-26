@@ -45,7 +45,7 @@ return [
             'port' => env('MAIL_PORT', 2525),
             'username' => env('MAIL_USERNAME'),
             'password' => env('MAIL_PASSWORD'),
-            'timeout' => null,
+            'timeout' => (int) env('MAIL_TIMEOUT', 10),
             'local_domain' => env('MAIL_EHLO_DOMAIN', parse_url((string) env('APP_URL', 'http://localhost'), PHP_URL_HOST)),
         ],
 
@@ -114,5 +114,30 @@ return [
         'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
         'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'Laravel')),
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Test Inbox
+    |--------------------------------------------------------------------------
+    |
+    | While a new server is being tested, every message (reminders included)
+    | can be redirected to one inbox, so no client receives a test e-mail.
+    |
+    */
+
+    'always_to' => env('MAIL_ALWAYS_TO'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Reminders to Clients
+    |--------------------------------------------------------------------------
+    |
+    | Off until a real mail service is configured and the project approved
+    | writing to the people it serves. While off, no appointment is marked
+    | as reminded, so nothing is lost when it is switched on.
+    |
+    */
+
+    'reminders_enabled' => (bool) env('MAIL_REMINDERS_ENABLED', true),
 
 ];

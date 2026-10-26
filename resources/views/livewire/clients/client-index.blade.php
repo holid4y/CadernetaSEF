@@ -44,10 +44,10 @@
                                         </dd>
                                     </div>
                                 @endif
-                                @if ($client->document || $client->trade_name)
+                                @if (($client->document && auth()->user()->canWrite()) || $client->trade_name)
                                     <div>
                                         <dt class="text-ink-muted">{{ $client->isOrganization() ? __('clients.fields.trade_name') : __('clients.fields.document') }}</dt>
-                                        <dd class="text-ink">{{ collect([$client->trade_name, $client->document])->filter()->implode(' · ') }}</dd>
+                                        <dd class="text-ink">{{ collect([$client->trade_name, auth()->user()->canWrite() ? $client->document : null])->filter()->implode(' · ') }}</dd>
                                     </div>
                                 @endif
                                 <div>

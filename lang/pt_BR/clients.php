@@ -28,6 +28,7 @@ return [
         'invalid_organization_document' => 'CNPJ inválido. Confira os 14 dígitos.',
         'document_taken' => 'Já existe um atendido com este CPF/CNPJ. Busque pelo número completo na lista de atendidos.',
         'invalid_phone' => 'Telefone inválido. Informe o DDD e o número.',
+        'stale' => 'Este cadastro foi alterado por outra pessoa. Atualize os dados e tente de novo.',
     ],
 
     'flash' => [

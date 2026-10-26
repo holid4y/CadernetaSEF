@@ -33,3 +33,22 @@ test('Pages build stays in demo mode even with server environment variables', as
         await rm(directory, { recursive: true, force: true });
     }
 });
+
+test('server builds accept plain HTTP only for a server on the same computer', async () => {
+    const directory = await mkdtemp(`${tmpdir()}/agenda-server-`);
+    try {
+        for (const name of ['css', 'fonts', 'icons', 'js']) await mkdir(`${directory}/${name}`);
+        for (const name of ['index.html', 'manifest.webmanifest', 'sw.js']) await writeFile(`${directory}/${name}`, 'fixture');
+        const build = (url) => run(process.execPath, [fileURLToPath(new URL('../scripts/build.mjs', import.meta.url)), '--server'], {
+            cwd: directory,
+            env: { ...process.env, MOBILE_API_URL: url },
+        });
+
+        await build('http://127.0.0.1:8000/api/v1');
+        assert.match(await readFile(`${directory}/dist/js/config.js`, 'utf8'), /"mode":"server","apiUrl":"http:\/\/127\.0\.0\.1:8000\/api\/v1"/);
+        await assert.rejects(build('http://agenda.example.org/api/v1'), /require MOBILE_API_URL=https/);
+        await assert.rejects(build('https://usuario:senha@agenda.example.org/api/v1'), /without credentials/);
+    } finally {
+        await rm(directory, { recursive: true, force: true });
+    }
+});

@@ -4,16 +4,24 @@ declare(strict_types=1);
 
 namespace App\Notifications;
 
+use App\Domain\Appointments\Actions\SendAppointmentReminder;
 use App\Domain\Appointments\ReminderMessage;
 use App\Models\Appointment;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 final class AppointmentReminder extends Notification implements ShouldQueue
 {
     use Queueable;
+
+    public int $tries = 3;
+
+    /** @var list<int> */
+    public array $backoff = [60, 300];
 
     public function __construct(public Appointment $appointment) {}
 
@@ -23,6 +31,26 @@ final class AppointmentReminder extends Notification implements ShouldQueue
     public function via(object $notifiable): array
     {
         return ['mail'];
+    }
+
+    // The queue may run minutes later: by then the appointment can be
+    // cancelled or the client may have withdrawn consent.
+    public function shouldSend(object $notifiable, string $channel): bool
+    {
+        return SendAppointmentReminder::canBeSent($this->appointment->fresh() ?? $this->appointment);
+    }
+
+    // After the last try the reminder no longer counts as sent, so the next
+    // run of the scheduler tries again while the appointment is ahead.
+    public function failed(Throwable $error): void
+    {
+        Appointment::query()->whereKey($this->appointment->id)->update(['reminder_sent_at' => null]);
+
+        // The mail server's answer may quote the address, so only its type is logged.
+        Log::warning('Appointment reminder was not accepted by the mail server.', [
+            'appointment_id' => $this->appointment->id,
+            'error' => $error::class,
+        ]);
     }
 
     public function toMail(object $notifiable): MailMessage

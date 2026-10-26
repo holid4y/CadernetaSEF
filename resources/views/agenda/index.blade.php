@@ -10,10 +10,6 @@
             @endif
         </x-page-header>
 
-        @if ($canCreate)
-            <x-calendar-import :create-url="route('appointments.create')" />
-        @endif
-
         <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
             <label for="agenda-responsible" class="text-sm text-ink-muted">{{ __('agenda.filter_responsible') }}</label>
             <x-select-input id="agenda-responsible" data-agenda-filter="responsible">

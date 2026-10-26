@@ -1,4 +1,4 @@
-const CACHE = 'agenda-contabil-v7';
+const CACHE = 'agenda-contabil-v9';
 
 const FILES = [
     './',
@@ -14,10 +14,6 @@ const FILES = [
     'js/contacts.js',
     'js/forms.js',
     'js/calendar.js',
-    'js/calendarReader.js',
-    'js/calendarWorker.js',
-    'js/calendarImport.js',
-    'js/vendor/ical.js',
     'js/viewport.js',
     'js/config.js',
     'js/api.js',
@@ -30,6 +26,7 @@ const FILES = [
     'js/seed.js',
     'js/store.js',
     'js/theme.js',
+    'js/theme-boot.js',
     'js/ui.js',
     'js/util.js',
     'js/views/agenda.js',

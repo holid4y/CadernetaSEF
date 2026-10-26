@@ -5,9 +5,9 @@ atendimentos. O conteúdo das respostas continua na plataforma de formulários.
 O funcionário abre o formulário pelos detalhes do atendimento, inclusive depois
 da conclusão. Cada plataforma mantém seu próprio login e suas permissões.
 
-Esta API está implementada. A API de login e operações do aplicativo mobile
-continua sendo um [contrato futuro](../mobile/API.md). A integração real com o
-outro grupo depende da adoção deste contrato e da configuração dos servidores.
+Esta API está implementada, assim como a [API do aplicativo](mobile-integration.md),
+que é separada e usa tokens de funcionários. A integração real com o outro grupo
+depende da adoção deste contrato e da configuração dos servidores.
 
 ## Identificação do atendimento
 
@@ -47,11 +47,13 @@ porta, caminho ou wildcard. Só links HTTPS nesses domínios são aceitos. URLs 
 credenciais ou porta diferente de 443 são recusadas. `FORMS_CREATE_URL` é opcional;
 sem ela, os formulários recebidos continuam podendo ser abertos.
 
-Rode `php artisan migrate --force` com o dono do banco e atualize a configuração
-com `php artisan config:cache`. O usuário de produção precisa de acesso às novas
-tabelas e sequências; os privilégios padrão de `database/sql/privileges.sql`
-cobrem migrations executadas pelo dono configurado. Use HTTPS em produção e
-configure proxies confiáveis no Laravel conforme o ambiente de hospedagem.
+Em produção, as migrations rodam com `caderneta-deploy --migrate`, como o dono do
+banco, seguidas de `database/sql/privileges.sql`. Os recibos de
+`form_webhook_events` ficam só de inserção para a aplicação. Depois de mudar o
+`.env`, rode `php artisan config:cache` e recarregue o PHP-FPM
+([operations.md](operations.md)). O Nginx entrega HTTPS direto ao PHP-FPM; se
+um balanceador ou CDN for posto na frente, configure os proxies confiáveis no
+Laravel.
 
 Para desenvolvimento, o mesmo backend pode rodar sem hospedagem externa:
 

@@ -41,7 +41,7 @@
 
         <div>
             <x-input-label for="document" :value="__('clients.fields.document')" />
-            <x-text-input id="document" wire:model="form.document" inputmode="numeric" class="mt-1 block w-full sm:w-1/2" />
+            <x-text-input id="document" wire:model="form.document" :inputmode="$form->isOrganization() ? 'text' : 'numeric'" autocapitalize="characters" class="mt-1 block w-full sm:w-1/2" />
             <x-input-error :messages="$errors->get('form.document')" class="mt-2" />
         </div>
 

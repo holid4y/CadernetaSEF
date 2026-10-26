@@ -1,8 +1,9 @@
 import { watchViewport } from './viewport.js';
 import { config } from './config.js';
 import { applyTheme } from './theme.js';
-import { route, start } from './router.js';
-import { icon } from './ui.js';
+import { onTabPage, refresh, route, start } from './router.js';
+import { store } from './store.js';
+import { icon, toast } from './ui.js';
 import agenda from './views/agenda.js';
 import appointmentDetail from './views/appointment.js';
 import { clientDetail, clientForm, clientList } from './views/clients.js';
@@ -36,6 +37,18 @@ document.getElementById('tabbar').innerHTML = `
     <a class="tab" href="#/impacto" data-tab="impact">${icon('chart')}Impacto</a>`;
 
 start(document.getElementById('view'));
+
+// Back in the app after a while: show what the rest of the team changed.
+// Forms and details keep what is on screen until the person moves on.
+if (config.mode === 'server') {
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState !== 'visible' || !store.user || Date.now() - store.loadedAt < 30_000) return;
+        store
+            .reload()
+            .then(() => onTabPage() && refresh())
+            .catch((error) => toast(error.message));
+    });
+}
 
 if (config.mode === 'demo' && !window.Capacitor?.isNativePlatform?.() && 'serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').catch(() => {});

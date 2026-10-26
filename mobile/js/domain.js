@@ -8,7 +8,7 @@ import {
     STATUS,
     TRANSITIONS,
 } from './data.js';
-import { addDays, dayKey, digits, dialNumber, isEmail, isValidCnpj, isValidCpf, normalize, startOfDay, timeStr } from './util.js';
+import { addDays, dayKey, digits, dialNumber, documentChars, isEmail, isValidCnpj, isValidCpf, normalize, startOfDay, timeStr } from './util.js';
 
 export class ValidationError extends Error {
     constructor(message, field = null) {
@@ -54,7 +54,7 @@ const log = (state, appointment, type, actor, at, old = null, next = null) => {
 
 export const isBlocking = (appointment) => BLOCKING.includes(appointment.status);
 
-/** Two periods overlap when new_start < existing_end AND new_end > existing_start (RF-026). */
+/** Two periods overlap when new_start < existing_end AND new_end > existing_start. */
 export const findConflict = (state, { responsibleId, start, end, ignoreId = null }) =>
     state.appointments.find(
         (a) =>
@@ -109,11 +109,8 @@ export function scheduleAppointment(state, actor, input, now = Date.now()) {
     const conflict = findConflict(state, { responsibleId: input.responsibleId, start: input.start, end: input.end });
     if (conflict) fail(conflictMessage(state, conflict), 'start');
 
-    if (input.externalKey && (typeof input.externalKey !== 'string' || input.externalKey.length > 1024)) fail('Identificador de calendário inválido.');
-    if (input.externalKey && state.appointments.some(item => item.externalKey === input.externalKey || input.externalKey === `atendimento-${item.id}@agenda-contabil`)) fail('Este evento já foi importado.');
 
     const appointment = {
-        externalKey: input.externalKey ?? null,
         id: nextId(state, 'appointment'),
         clientId: client.id,
         serviceSlug: service.slug,
@@ -208,7 +205,7 @@ export function toggleDocument(state, actor, appointmentId, documentId, now = Da
     return document;
 }
 
-/** Why a reminder cannot go out by e-mail, or null when it can (RF-070). */
+/** Why a reminder cannot go out by e-mail, or null when it can. */
 export const reminderBlocker = (client) => {
     if (!client.active) return 'Este atendido está inativo.';
     if (!client.acceptsReminders) return 'O atendido não autorizou lembretes.';
@@ -257,12 +254,12 @@ export function saveClient(state, actor, input, id = null, now = Date.now()) {
     const phone = digits(input.phone);
     if (phone && !dialNumber(input.phone)) fail('O telefone precisa ter DDD e número. Ex.: (51) 99999-9999.', 'phone');
 
-    const document = digits(input.document);
+    const document = type === 'organization' ? documentChars(input.document) : digits(input.document);
     if (document) {
         const valid = type === 'organization' ? isValidCnpj(document) : isValidCpf(document);
         if (!valid) fail(type === 'organization' ? 'Esse CNPJ não confere. Confira os números.' : 'Esse CPF não confere. Confira os números.', 'document');
 
-        const duplicate = state.clients.find((c) => c.id !== id && c.document && digits(c.document) === document);
+        const duplicate = state.clients.find((c) => c.id !== id && c.document && documentChars(c.document) === document);
         if (duplicate) fail(`Esse documento já está cadastrado para ${duplicate.name}.`, 'document');
     }
 
@@ -299,6 +296,7 @@ export function saveClient(state, actor, input, id = null, now = Date.now()) {
 export function searchClients(state, term = '', { type = null, onlyActive = false } = {}) {
     const q = normalize(term);
     const qDigits = digits(term);
+    const qDocument = /\d/.test(term) ? documentChars(term) : '';
 
     return state.clients
         .filter((c) => (type ? c.type === type : true))
@@ -307,8 +305,8 @@ export function searchClients(state, term = '', { type = null, onlyActive = fals
             if (!q) return true;
             const text = normalize(`${c.name} ${c.tradeName ?? ''} ${c.email ?? ''}`);
             if (text.includes(q)) return true;
-            if (qDigits.length < 3) return false;
-            return digits(c.phone).includes(qDigits) || digits(c.document).includes(qDigits);
+            if (qDigits.length >= 3 && digits(c.phone).includes(qDigits)) return true;
+            return qDocument.length >= 3 && documentChars(c.document).includes(qDocument);
         })
         .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
 }

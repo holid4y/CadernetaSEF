@@ -13,8 +13,17 @@ final class EnsureUserIsActive
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if ($request->user() === null || $request->user()->active) {
+        $user = $request->user();
+
+        if ($user === null || $user->active) {
             return $next($request);
+        }
+
+        // The mobile app signs in with tokens: all of them stop working at once.
+        if (! $request->hasSession()) {
+            $user->tokens()->delete();
+
+            abort(Response::HTTP_UNAUTHORIZED, __('auth.inactive'));
         }
 
         Auth::guard('web')->logout();

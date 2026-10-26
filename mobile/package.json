@@ -10,7 +10,9 @@
         "android": "npm run sync && cap open android",
         "ios": "npm run sync && cap open ios",
         "test:layout": "playwright test",
-        "build:demo": "node scripts/build.mjs --demo"
+        "build:demo": "node scripts/build.mjs --demo",
+        "build:server": "node scripts/build.mjs --server",
+        "sync:server": "npm run build:server && cap sync"
     },
     "dependencies": {
         "@capacitor/android": "^8.5.3",

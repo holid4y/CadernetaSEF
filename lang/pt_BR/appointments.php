@@ -44,6 +44,9 @@ return [
         'responsible_unavailable' => ':name não pode receber atendimentos: a conta está desativada ou é somente de visualização.',
         'transition_not_allowed' => 'Um atendimento ":from" não pode passar para ":to".',
         'not_editable' => 'Só é possível alterar horário ou responsável de atendimentos agendados ou confirmados.',
+        'undo_unavailable' => 'Não é mais possível desfazer: o atendimento mudou depois disso. Atualize os dados.',
+        'stale' => 'Este atendimento foi alterado por outra pessoa. Atualize os dados e tente de novo.',
+        'slot_taken' => 'Este horário acabou de ser ocupado. Atualize os dados e escolha outro horário.',
     ],
 
     'flash' => [

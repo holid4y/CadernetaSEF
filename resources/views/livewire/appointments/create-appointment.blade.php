@@ -1,5 +1,4 @@
 <form wire:submit="save" class="space-y-6">
-    <x-input-error :messages="$errors->get('calendar_import_key')" />
     <x-card class="space-y-4">
         <h2 class="text-2xl">{{ __('appointments.create.step_client') }}</h2>
 

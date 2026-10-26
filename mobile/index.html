@@ -3,26 +3,19 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
-    <title>Agenda Contábil</title>
+    <title>Caderneta SEF</title>
     <meta name="description" content="Agenda de atendimentos do projeto Sustentabilidade Econômica e Financeira (Feevale).">
     <meta name="theme-color" content="#f6f1e9">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-title" content="Agenda">
+    <meta name="apple-mobile-web-app-title" content="Caderneta SEF">
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="icon" type="image/svg+xml" href="icons/logo.svg">
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
     <link rel="preload" href="fonts/fraunces-latin-soft-normal.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="fonts/literata-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="css/app.css">
-    <script>
-        (function () {
-            var pref = 'auto';
-            try { pref = localStorage.getItem('agenda-contabil.theme') || 'auto'; } catch (e) {}
-            var dark = pref === 'dark' || (pref === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
-            document.documentElement.dataset.theme = dark ? 'dark' : 'light';
-        })();
-    </script>
+    <script src="js/theme-boot.js"></script>
 </head>
 <body>
     <div id="app">

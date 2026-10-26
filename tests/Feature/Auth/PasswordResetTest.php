@@ -7,6 +7,7 @@ namespace Tests\Feature\Auth;
 use App\Models\User;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
@@ -71,5 +72,59 @@ class PasswordResetTest extends TestCase
 
             return true;
         });
+    }
+
+    public function test_the_link_is_sent_whatever_the_case_of_the_e_mail(): void
+    {
+        Notification::fake();
+        $user = User::factory()->create(['email' => 'maria@feevale.br']);
+
+        $this->post('/forgot-password', ['email' => ' Maria@Feevale.BR ']);
+
+        Notification::assertSentTo($user, ResetPassword::class);
+    }
+
+    public function test_the_reset_e_mail_is_in_portuguese(): void
+    {
+        $user = User::factory()->create();
+
+        $mail = (new ResetPassword('token'))->toMail($user);
+
+        $this->assertSame('Redefinir sua senha', $mail->subject);
+        $this->assertSame('Redefinir senha', $mail->actionText);
+    }
+
+    public function test_repeated_requests_from_one_address_are_slowed_down(): void
+    {
+        Notification::fake();
+
+        foreach (range(1, 6) as $attempt) {
+            $this->post('/forgot-password', ['email' => "pessoa{$attempt}@feevale.br"]);
+        }
+
+        $this->post('/forgot-password', ['email' => 'outra@feevale.br'])->assertTooManyRequests();
+    }
+
+    public function test_a_reset_password_signs_out_every_device(): void
+    {
+        Notification::fake();
+        $user = User::factory()->create();
+        $user->createToken('celular');
+        DB::table('sessions')->insert(['id' => 'sessao-antiga', 'user_id' => $user->id, 'payload' => '', 'last_activity' => time()]);
+        $this->post('/forgot-password', ['email' => $user->email]);
+
+        Notification::assertSentTo($user, ResetPassword::class, function (ResetPassword $notification) use ($user): bool {
+            $this->post('/reset-password', [
+                'token' => $notification->token,
+                'email' => $user->email,
+                'password' => 'nova-senha-2026',
+                'password_confirmation' => 'nova-senha-2026',
+            ])->assertSessionHasNoErrors();
+
+            return true;
+        });
+
+        $this->assertSame(0, $user->tokens()->count());
+        $this->assertDatabaseMissing('sessions', ['id' => 'sessao-antiga']);
     }
 }

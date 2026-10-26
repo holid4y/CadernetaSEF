@@ -17,6 +17,12 @@ class AgendaEventsRequest extends FormRequest
     // Longest view is a month plus the days of the weeks around it.
     private const MAX_RANGE_DAYS = 45;
 
+    // A query string can carry lists (start[]=...), which the date rules can not read.
+    protected function prepareForValidation(): void
+    {
+        $this->merge(array_map(fn (mixed $value): mixed => is_string($value) ? $value : null, $this->only('start', 'end')));
+    }
+
     public function rules(): array
     {
         return [

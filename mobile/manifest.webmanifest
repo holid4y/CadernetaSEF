@@ -1,6 +1,6 @@
 {
-    "name": "Agenda Contábil",
-    "short_name": "Agenda",
+    "name": "Caderneta SEF",
+    "short_name": "Caderneta SEF",
     "description": "Agenda de atendimentos do projeto Sustentabilidade Econômica e Financeira (Feevale)",
     "lang": "pt-BR",
     "start_url": "./",

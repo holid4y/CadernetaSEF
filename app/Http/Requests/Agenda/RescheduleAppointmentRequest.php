@@ -15,6 +15,12 @@ class RescheduleAppointmentRequest extends FormRequest
         return $this->user()->can('update', $this->route('appointment'));
     }
 
+    // A body can carry lists where dates belong, which the date rules can not read.
+    protected function prepareForValidation(): void
+    {
+        $this->merge(array_map(fn (mixed $value): mixed => is_string($value) ? $value : null, $this->only('starts_at', 'ends_at')));
+    }
+
     public function rules(): array
     {
         return [

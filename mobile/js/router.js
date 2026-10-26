@@ -90,3 +90,5 @@ export function start(element) {
 }
 
 export const currentPath = () => current?.path ?? '/';
+
+export const onTabPage = () => Boolean(current?.match.tab);

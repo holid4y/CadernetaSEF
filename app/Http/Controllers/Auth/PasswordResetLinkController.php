@@ -23,7 +23,7 @@ class PasswordResetLinkController extends Controller
             'email' => ['required', 'email'],
         ]);
 
-        Password::sendResetLink($request->only('email'));
+        Password::sendResetLink(['email' => $request->string('email')->trim()->lower()->toString()]);
 
         // Same answer whether or not the address has an account, so the form
         // can not be used to find out who works on the project.

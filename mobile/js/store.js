@@ -42,7 +42,25 @@ const api = createApi(config.apiUrl);
 let state = config.mode === 'demo' ? load() : empty();
 let userId = config.mode === 'demo' ? Number(read(SESSION_KEY)) || null : null;
 let pending = false;
+let loadedAt = 0;
 const listeners = new Set();
+
+// The server refuses (409) a change made over data someone else has just
+// modified, so each command also carries what this device was showing.
+const SEEN = {
+    changeStatus: ([id, status]) => [id, status, domain.appointmentOf(state, id)?.status ?? null],
+    rescheduleAppointment: ([id, input]) => [id, { ...input, updatedAt: domain.appointmentOf(state, id)?.updatedAt ?? null }],
+    saveClient: ([input, id = null]) => [{ ...input, updatedAt: id === null ? null : domain.clientOf(state, id)?.updatedAt ?? null }, id],
+    toggleDocument: ([appointmentId, documentId]) => [
+        appointmentId,
+        documentId,
+        !domain.appointmentOf(state, appointmentId)?.documents.find((d) => d.id === documentId)?.receivedAt,
+    ],
+    removeServiceDocument: ([slug, index]) => [slug, index, domain.serviceOf(state, slug)?.documents[index] ?? null],
+    restoreAppointment: ([snapshot]) => [{ id: snapshot.id, status: snapshot.status }],
+};
+
+const withSeen = (name, args) => (SEEN[name] ? SEEN[name](args) : args);
 
 const persist = () => write(DATA_KEY, JSON.stringify(state));
 
@@ -56,9 +74,10 @@ export const store = {
             if (pending) throw new domain.ValidationError('Aguarde a operação em andamento.');
             pending = true;
             try {
-                const response = await api.request('/mobile/commands', { method: 'POST', body: { name, args } });
+                const response = await api.request('/mobile/commands', { method: 'POST', body: { name, args: withSeen(name, args) } });
                 if (!validState(response?.state) || !Object.prototype.hasOwnProperty.call(response, 'result')) throw new domain.ValidationError('Resposta inválida do servidor.');
                 state = response.state;
+                loadedAt = Date.now();
                 listeners.forEach((listener) => listener());
                 return response.result;
             } catch (error) {
@@ -84,6 +103,7 @@ export const store = {
             const response = await api.request('/mobile/bootstrap');
             if (!validState(response?.state)) throw new domain.ValidationError('Resposta inválida do servidor.');
             state = response.state;
+            loadedAt = Date.now();
         } catch (error) {
             if (error.status === 401) {
                 state = empty();
@@ -102,6 +122,10 @@ export const store = {
     },
     get state() {
         return state;
+    },
+
+    get loadedAt() {
+        return loadedAt;
     },
 
     get user() {
@@ -124,13 +148,14 @@ export const store = {
     async login(email, password) {
         if (!this.isDemo) {
             try {
-                const auth = await api.request('/login', { method: 'POST', body: { email: email.trim().toLowerCase(), password, device_name: 'Agenda Contábil mobile' } });
+                const auth = await api.request('/login', { method: 'POST', body: { email: email.trim().toLowerCase(), password, device_name: 'Caderneta SEF mobile' } });
                 if (!auth?.token || !auth?.user?.id) throw new domain.ValidationError('Resposta inválida do servidor.');
                 api.setToken(auth.token);
                 const response = await api.request('/mobile/bootstrap');
                 if (!validState(response?.state) || !response.state.users.some((u) => u.id === auth.user.id && u.active)) throw new domain.ValidationError('Resposta inválida do servidor.');
                 state = response.state;
                 userId = auth.user.id;
+                loadedAt = Date.now();
                 return this.user;
             } catch (error) {
                 api.clear();

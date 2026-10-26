@@ -4,13 +4,9 @@ declare(strict_types=1);
 
 namespace App\Livewire\Forms;
 
+use App\Domain\Clients\Actions\SaveClient;
 use App\Domain\Clients\Enums\ClientType;
 use App\Models\Client;
-use App\Rules\BrazilianDocument;
-use App\Support\BlindIndex;
-use App\Support\ContactLinks;
-use Closure;
-use Illuminate\Validation\Rule;
 use Livewire\Form;
 
 class ClientForm extends Form
@@ -56,68 +52,28 @@ class ClientForm extends Form
 
     protected function rules(): array
     {
-        return [
-            'type' => ['required', Rule::enum(ClientType::class)],
-            'name' => ['required', 'string', 'max:255'],
-            'trade_name' => ['nullable', 'string', 'max:255'],
-            'document' => [
-                'nullable', 'string', 'max:20',
-                new BrazilianDocument(ClientType::tryFrom($this->type) ?? ClientType::Individual),
-                $this->documentIsFree(...),
-            ],
-            'phone' => ['nullable', 'string', 'max:30', 'required_without:email', $this->phoneHasDigits(...)],
-            'email' => ['nullable', 'email', 'max:255'],
-            'notes' => ['nullable', 'string', 'max:2000'],
-            'accepts_reminders' => ['boolean'],
-            'active' => ['boolean'],
-        ];
-    }
-
-    private function documentIsFree(string $attribute, mixed $value, Closure $fail): void
-    {
-        $taken = Client::query()
-            ->where('document_index', BlindIndex::forDocument((string) $value))
-            ->when($this->client, fn ($query) => $query->whereKeyNot($this->client->id))
-            ->exists();
-
-        if ($taken) {
-            $fail(__('clients.errors.document_taken'));
-        }
-    }
-
-    // Landline or mobile with area code, optionally with the country code.
-    private function phoneHasDigits(string $attribute, mixed $value, Closure $fail): void
-    {
-        if (ContactLinks::phone((string) $value) === null) {
-            $fail(__('clients.errors.invalid_phone'));
-        }
+        return SaveClient::rules($this->client, $this->type);
     }
 
     protected function messages(): array
     {
-        return [
-            'phone.required_without' => __('clients.errors.contact_required'),
-        ];
+        return SaveClient::messages();
     }
 
     public function save(): Client
     {
         $this->validate();
 
-        $client = $this->client ?? new Client;
-
-        $client->fill([
+        return app(SaveClient::class)->handle($this->client, [
             'type' => $this->type,
             'name' => $this->name,
-            'trade_name' => $this->isOrganization() ? ($this->trade_name ?: null) : null,
-            'document' => $this->document ?: null,
-            'phone' => $this->phone ?: null,
-            'email' => $this->email ?: null,
-            'notes' => $this->notes ?: null,
+            'trade_name' => $this->trade_name,
+            'document' => $this->document,
+            'phone' => $this->phone,
+            'email' => $this->email,
+            'notes' => $this->notes,
             'accepts_reminders' => $this->accepts_reminders,
             'active' => $this->active,
-        ])->save();
-
-        return $client;
+        ]);
     }
 }

@@ -1,0 +1,10 @@
+[Unit]
+Description=Run the CadernetaSEF scheduler every minute
+
+[Timer]
+OnCalendar=*-*-* *:*:00
+AccuracySec=1s
+Unit=caderneta-scheduler.service
+
+[Install]
+WantedBy=timers.target

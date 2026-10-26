@@ -27,6 +27,15 @@ return [
         'unchanged' => 'Este atendimento não pode mais ser alterado por aqui.',
     ],
 
+    'errors' => [
+        'disabled' => 'O envio de lembretes por e-mail está desligado neste servidor. Use o WhatsApp ou o e-mail do seu aparelho.',
+        'closed' => 'Este atendimento não recebe mais lembretes.',
+        'past' => 'O atendimento já começou.',
+        'inactive' => 'Este atendido está inativo.',
+        'invalid_email' => 'Cadastre um e-mail válido para enviar o lembrete.',
+        'mail_unavailable' => 'O servidor de e-mail não aceitou o lembrete agora. Tente novamente em alguns minutos.',
+    ],
+
     'card' => [
         'title' => 'Lembrete',
         'sent_at' => 'Enviado por e-mail em :date.',

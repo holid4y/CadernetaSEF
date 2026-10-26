@@ -1,0 +1,16 @@
+[Unit]
+Description=CadernetaSEF scheduled tasks (reminders, token and failed job cleanup)
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/caderneta-sef/current
+ExecStart=/usr/bin/php /var/www/caderneta-sef/current/artisan schedule:run --no-interaction
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/var/www/caderneta-sef/shared/storage

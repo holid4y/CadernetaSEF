@@ -18,18 +18,23 @@ final class ChangeAppointmentStatus
      */
     public function handle(?User $author, Appointment $appointment, AppointmentStatus $next): Appointment
     {
-        $current = $appointment->status;
+        return DB::transaction(function () use ($author, $appointment, $next): Appointment {
+            // Two people changing the same appointment wait for each other,
+            // so the transition is checked against the status that was saved.
+            Appointment::query()->whereKey($appointment->id)->lockForUpdate()->first();
+            $appointment->refresh();
 
-        if (! $current->canTransitionTo($next)) {
-            throw ValidationException::withMessages([
-                'status' => __('appointments.errors.transition_not_allowed', [
-                    'from' => $current->label(),
-                    'to' => $next->label(),
-                ]),
-            ]);
-        }
+            $current = $appointment->status;
 
-        return DB::transaction(function () use ($author, $appointment, $current, $next): Appointment {
+            if (! $current->canTransitionTo($next)) {
+                throw ValidationException::withMessages([
+                    'status' => __('appointments.errors.transition_not_allowed', [
+                        'from' => $current->label(),
+                        'to' => $next->label(),
+                    ]),
+                ]);
+            }
+
             $appointment->update([
                 'status' => $next,
                 'updated_by' => $author?->id,

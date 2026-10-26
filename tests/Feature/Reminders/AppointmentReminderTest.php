@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Reminders;
 
+use App\Domain\Appointments\Actions\RescheduleAppointment;
 use App\Domain\Appointments\Enums\ActivityType;
 use App\Domain\Appointments\Enums\AppointmentStatus;
 use App\Domain\Appointments\ReminderMessage;
@@ -14,8 +15,10 @@ use App\Models\Service;
 use App\Models\User;
 use App\Notifications\AppointmentReminder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Notifications\SendQueuedNotifications;
 use Illuminate\Support\Facades\Notification;
 use Livewire\Livewire;
+use RuntimeException;
 use Tests\TestCase;
 
 class AppointmentReminderTest extends TestCase
@@ -189,6 +192,53 @@ class AppointmentReminderTest extends TestCase
     public function test_there_is_no_whatsapp_link_without_a_usable_phone(): void
     {
         $this->assertNull(ReminderMessage::whatsAppUrl($this->appointmentAt('2026-10-06 10:00', ['phone' => '1234'])));
+    }
+
+    public function test_a_rescheduled_appointment_is_reminded_of_the_new_time(): void
+    {
+        $appointment = $this->appointmentAt('2026-10-06 10:00');
+        $this->artisan('appointments:send-reminders');
+
+        app(RescheduleAppointment::class)->handle(
+            User::factory()->create(),
+            $appointment->fresh(),
+            now()->parse('2026-10-06 11:00'),
+            now()->parse('2026-10-06 12:00'),
+        );
+        $this->artisan('appointments:send-reminders');
+
+        Notification::assertSentToTimes($appointment->client, AppointmentReminder::class, 2);
+    }
+
+    public function test_changing_only_the_responsible_does_not_repeat_the_reminder(): void
+    {
+        $appointment = $this->appointmentAt('2026-10-06 10:00');
+        $this->artisan('appointments:send-reminders');
+
+        app(RescheduleAppointment::class)->handle(
+            User::factory()->create(),
+            $appointment->fresh(),
+            $appointment->starts_at,
+            $appointment->ends_at,
+            User::factory()->create(),
+        );
+        $this->artisan('appointments:send-reminders');
+
+        Notification::assertSentToTimes($appointment->client, AppointmentReminder::class, 1);
+    }
+
+    public function test_a_reminder_the_mail_server_kept_refusing_is_tried_again_later(): void
+    {
+        $appointment = $this->appointmentAt('2026-10-06 10:00');
+        $this->artisan('appointments:send-reminders');
+        $this->assertNotNull($appointment->fresh()->reminder_sent_at);
+
+        (new SendQueuedNotifications(collect([$appointment->client]), new AppointmentReminder($appointment->fresh())))
+            ->failed(new RuntimeException('Expected response code 250 but got 421'));
+
+        $this->assertNull($appointment->fresh()->reminder_sent_at);
+        $this->artisan('appointments:send-reminders');
+        Notification::assertSentToTimes($appointment->client, AppointmentReminder::class, 2);
     }
 
     public function test_the_reminder_command_is_scheduled(): void

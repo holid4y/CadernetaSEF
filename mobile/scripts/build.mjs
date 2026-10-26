@@ -1,13 +1,16 @@
 import { cp, mkdir, rm, writeFile } from 'node:fs/promises';
 
-const mode = process.argv.includes('--demo') ? 'demo' : process.env.MOBILE_MODE ?? 'demo';
+const flag = ['--demo', '--server'].find((option) => process.argv.includes(option));
+const mode = flag ? flag.slice(2) : process.env.MOBILE_MODE ?? 'demo';
 const apiUrl = mode === 'demo' ? '' : (process.env.MOBILE_API_URL ?? '').replace(/\/$/, '');
 const formsHosts = mode === 'demo' ? [] : (process.env.MOBILE_FORMS_ALLOWED_HOSTS ?? '').split(',').map((host) => host.trim().toLowerCase()).filter(Boolean);
 if (formsHosts.some((host) => !/^(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$/.test(host))) {
     throw new Error('MOBILE_FORMS_ALLOWED_HOSTS must contain domain names without paths or wildcards');
 }
 if (!['demo', 'server'].includes(mode)) throw new Error('MOBILE_MODE must be demo or server');
-if (mode === 'server' && (!apiUrl.startsWith('https://') || new URL(apiUrl).username || new URL(apiUrl).password)) {
+// Plain HTTP only reaches a server on this same computer, for development.
+const local = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?\//.test(apiUrl);
+if (mode === 'server' && ((!apiUrl.startsWith('https://') && !local) || new URL(apiUrl).username || new URL(apiUrl).password)) {
     throw new Error('Server builds require MOBILE_API_URL=https://your-server/api/v1 (without credentials)');
 }
 

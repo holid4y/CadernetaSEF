@@ -1,0 +1,23 @@
+[Unit]
+Description=CadernetaSEF queue worker (reminder e-mails)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/caderneta-sef/current
+# Exits every hour and after each deploy; systemd starts it again on the
+# release that is current at that moment.
+ExecStart=/usr/bin/php /var/www/caderneta-sef/current/artisan queue:work database --sleep=3 --tries=3 --timeout=60 --max-time=3600 --memory=128
+Restart=always
+RestartSec=5
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/var/www/caderneta-sef/shared/storage
+
+[Install]
+WantedBy=multi-user.target

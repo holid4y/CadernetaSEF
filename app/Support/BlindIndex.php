@@ -5,16 +5,18 @@ declare(strict_types=1);
 namespace App\Support;
 
 // HMAC of an encrypted value, for exact lookups without storing it in clear.
+use App\Rules\BrazilianDocument;
+
 final class BlindIndex
 {
     public static function forDocument(?string $document): ?string
     {
-        $digits = preg_replace('/\D/', '', (string) $document);
+        $characters = BrazilianDocument::characters((string) $document);
 
-        if ($digits === '') {
+        if ($characters === '') {
             return null;
         }
 
-        return hash_hmac('sha256', 'document:'.$digits, (string) config('app.key'));
+        return hash_hmac('sha256', 'document:'.$characters, (string) config('app.key'));
     }
 }

@@ -1,4 +1,3 @@
-import { openCalendarImport } from '../calendarImport.js';
 import { STATUS } from '../data.js';
 import { appointmentsOnDay, can, clientOf, responsibles, serviceOf } from '../domain.js';
 import { navigate, refresh } from '../router.js';
@@ -26,6 +25,16 @@ import { avatar } from '../ui.js';
 
 // Kept between visits so coming back from an appointment lands on the same day.
 const view = { mode: 'week', selected: startOfDay(Date.now()), responsibleId: null, showClosed: false };
+
+// Moving a month lands on today when it is the current month.
+const MOVES = {
+    week: (selected, step) => addDays(selected, step * 7),
+    day: (selected, step) => addDays(selected, step),
+    month: (selected, step) => {
+        const month = addMonths(selected, step);
+        return isSameDay(startOfMonth(month), startOfMonth(Date.now())) ? startOfDay(Date.now()) : month;
+    },
+};
 
 const FIRST_HOUR = 7;
 const LAST_HOUR = 21;
@@ -181,13 +190,11 @@ export default function agenda({ state, user }) {
             </div>
             <div style="display:flex;justify-content:center;margin-bottom:12px"><button class="chip" type="button" id="today">Ir para hoje</button></div>
 
-            ${canCreate ? '<button class="btn btn-secondary btn-block" type="button" id="import-calendar" style="margin-bottom:12px">Importar de outra agenda (.ics)</button>' : ''}
             ${body}
             ${canCreate && view.mode !== 'day' ? `<a class="btn btn-secondary btn-block" style="margin-top:16px" href="#/atendimentos/novo?inicio=${dayKey(view.selected)}">${icon('plus')}Agendar neste dia</a>` : ''}`,
 
         mount(root) {
             const go = () => refresh();
-            root.querySelector('#import-calendar')?.addEventListener('click', openCalendarImport);
 
             root.querySelector('#profile').addEventListener('click', openProfile);
             root.querySelector('#today').addEventListener('click', () => {
@@ -204,13 +211,7 @@ export default function agenda({ state, user }) {
 
             root.querySelectorAll('[data-step]').forEach((button) =>
                 button.addEventListener('click', () => {
-                    const step = Number(button.dataset.step);
-                    if (view.mode === 'week') view.selected = addDays(view.selected, step * 7);
-                    else if (view.mode === 'day') view.selected = addDays(view.selected, step);
-                    else {
-                        const month = addMonths(view.selected, step);
-                        view.selected = isSameDay(startOfMonth(month), startOfMonth(Date.now())) ? startOfDay(Date.now()) : month;
-                    }
+                    view.selected = MOVES[view.mode](view.selected, Number(button.dataset.step));
                     go();
                 }),
             );

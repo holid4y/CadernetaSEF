@@ -129,4 +129,13 @@ class CreateAppointmentTest extends TestCase
             ->call('save')
             ->assertHasErrors(['client_id' => 'required', 'service_id' => 'required']);
     }
+
+    public function test_a_link_to_an_inactive_or_unknown_client_opens_an_empty_form(): void
+    {
+        $inactive = Client::factory()->inactive()->create();
+        $this->actingAs(User::factory()->create());
+
+        $this->get("/atendimentos/novo?atendido={$inactive->id}")->assertOk();
+        $this->get('/atendimentos/novo?atendido=999999')->assertOk();
+    }
 }

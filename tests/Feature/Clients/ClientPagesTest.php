@@ -37,6 +37,23 @@ class ClientPagesTest extends TestCase
             ->set('search', '12345678900')->assertSee('Ana Paula');
     }
 
+    public function test_a_cnpj_with_letters_is_saved_and_found_however_it_is_typed(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test(ClientEditor::class)
+            ->set('form.type', 'organization')
+            ->set('form.name', 'Cooperativa Nova Esperança')
+            ->set('form.phone', '(51) 3595-0000')
+            ->set('form.document', '12.ABC.345/01DE-35')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        Livewire::test(ClientIndex::class)
+            ->set('search', '12abc34501de35')->assertSee('Cooperativa Nova Esperança')
+            ->set('search', '12.ABC.345/01DE-36')->assertDontSee('Cooperativa Nova Esperança');
+    }
+
     public function test_a_search_with_like_wildcards_is_taken_literally(): void
     {
         Client::factory()->create(['name' => 'Ana Paula']);
@@ -96,6 +113,24 @@ class ClientPagesTest extends TestCase
         $this->get("/atendidos/{$client->id}")->assertOk()->assertDontSee('Editar cadastro');
         $this->get("/atendidos/{$client->id}/editar")->assertForbidden();
         $this->get('/atendidos/novo')->assertForbidden();
+    }
+
+    public function test_viewers_do_not_get_documents_or_notes_on_the_web_either(): void
+    {
+        $this->travelTo('2026-10-10 12:00');
+        $client = Client::factory()->create(['name' => 'Ana Paula', 'document' => '529.982.247-25', 'notes' => 'Prefere contato pela manhã']);
+        $appointment = Appointment::factory()->for($client)->between('2026-10-15 13:00', '2026-10-15 14:00')->create(['notes' => 'Trazer os recibos de 2025']);
+        $private = ['529.982.247-25', 'Prefere contato pela manhã', 'Trazer os recibos de 2025'];
+
+        $this->actingAs(User::factory()->viewer()->create());
+        $this->get("/atendidos/{$client->id}")->assertOk()->assertSee('Ana Paula')->assertDontSee($private);
+        $this->get("/atendimentos/{$appointment->id}")->assertOk()->assertDontSee($private);
+        Livewire::test(ClientIndex::class)->assertSee('Ana Paula')->assertDontSee($private);
+
+        $this->actingAs(User::factory()->create());
+        $this->get("/atendidos/{$client->id}")->assertSee($private);
+        $this->get("/atendimentos/{$appointment->id}")->assertSee('Trazer os recibos de 2025');
+        Livewire::test(ClientIndex::class)->assertSee('529.982.247-25');
     }
 
     public function test_each_client_expands_with_the_next_and_recent_appointments(): void

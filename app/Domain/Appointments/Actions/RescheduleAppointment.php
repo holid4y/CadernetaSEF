@@ -24,22 +24,25 @@ final class RescheduleAppointment
         CarbonInterface $endsAt,
         ?User $responsible = null,
     ): Appointment {
-        $responsible ??= $appointment->responsible;
+        return DB::transaction(function () use ($author, $appointment, $startsAt, $endsAt, $responsible): Appointment {
+            Appointment::query()->whereKey($appointment->id)->lockForUpdate()->first();
+            $appointment->refresh();
 
-        $movesPeriod = ! $appointment->starts_at->equalTo($startsAt) || ! $appointment->ends_at->equalTo($endsAt);
-        $changesResponsible = $responsible->id !== $appointment->responsible_user_id;
+            $responsible ??= $appointment->responsible;
 
-        if (! $movesPeriod && ! $changesResponsible) {
-            return $appointment;
-        }
+            $movesPeriod = ! $appointment->starts_at->equalTo($startsAt) || ! $appointment->ends_at->equalTo($endsAt);
+            $changesResponsible = $responsible->id !== $appointment->responsible_user_id;
 
-        if (! $appointment->status->canBeRescheduled()) {
-            throw ValidationException::withMessages([
-                'starts_at' => __('appointments.errors.not_editable'),
-            ]);
-        }
+            if (! $movesPeriod && ! $changesResponsible) {
+                return $appointment;
+            }
 
-        return DB::transaction(function () use ($author, $appointment, $startsAt, $endsAt, $responsible, $movesPeriod, $changesResponsible): Appointment {
+            if (! $appointment->status->canBeRescheduled()) {
+                throw ValidationException::withMessages([
+                    'starts_at' => __('appointments.errors.not_editable'),
+                ]);
+            }
+
             $this->ensureResponsibleIsAvailable->handle($responsible, $startsAt, $endsAt, ignore: $appointment);
 
             $before = [
@@ -48,12 +51,19 @@ final class RescheduleAppointment
                 'responsible_user_id' => $appointment->responsible_user_id,
             ];
 
-            $appointment->update([
+            $appointment->fill([
                 'starts_at' => $startsAt,
                 'ends_at' => $endsAt,
                 'responsible_user_id' => $responsible->id,
                 'updated_by' => $author->id,
             ]);
+
+            // A reminder already sent carries the old time; the next run sends the new one.
+            if ($movesPeriod) {
+                $appointment->reminder_sent_at = null;
+            }
+
+            $appointment->save();
 
             if ($movesPeriod) {
                 $appointment->recordActivity(

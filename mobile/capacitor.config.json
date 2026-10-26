@@ -1,6 +1,6 @@
 {
   "appId": "br.feevale.agendacontabil",
-  "appName": "Agenda Contábil",
+  "appName": "Caderneta SEF",
   "webDir": "dist",
   "server": {
     "androidScheme": "https"

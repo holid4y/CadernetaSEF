@@ -66,7 +66,7 @@ const reminderCard = (state, appointment, canWrite) => {
         : blocker ?? (open ? (store.isDemo ? 'O envio automático ficará disponível com o servidor.' : 'Lembrete automático configurado no servidor.') : 'Este atendimento não recebe mais lembretes.');
 
     const allowed = canWrite && client.active && client.acceptsReminders && open;
-    const mail = allowed ? emailLink(client.email, 'Seu atendimento na Agenda Contábil', reminderText(state, appointment)) : null;
+    const mail = allowed ? emailLink(client.email, 'Seu atendimento na Caderneta SEF', reminderText(state, appointment)) : null;
     const whatsapp = number && allowed
         ? `<a class="btn btn-soft btn-sm" href="${esc(whatsappLink(client.phone, reminderText(state, appointment)))}" target="_blank" rel="noopener">${icon('chat')}Enviar pelo WhatsApp</a>`
         : '';

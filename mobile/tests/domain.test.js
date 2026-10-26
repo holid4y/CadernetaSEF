@@ -207,6 +207,16 @@ test('client history lists only that client, newest first, with disabled service
     assert.ok(history.some((a) => a.serviceSlug === 'irpf'));
 });
 
+test('a CNPJ with letters is accepted, compared and found like a numeric one', () => {
+    const { state, admin } = fresh();
+    assert.throws(() => saveClient(state, admin, { type: 'organization', name: 'Cooperativa', document: '12.ABC.345/01DE-36' }), /CNPJ/);
+
+    const created = saveClient(state, admin, { type: 'organization', name: 'Cooperativa Nova', document: '12.abc.345/01de-35' });
+    assert.equal(created.document, '12ABC34501DE35');
+    assert.throws(() => saveClient(state, admin, { type: 'organization', name: 'Outra', document: '12ABC34501DE35' }), /já está cadastrado/);
+    assert.deepEqual(searchClients(state, '12.abc.345').map((c) => c.name), ['Cooperativa Nova']);
+});
+
 test('client registration validates and de-duplicates', () => {
     const { state, admin } = fresh();
 

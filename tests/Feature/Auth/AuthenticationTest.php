@@ -75,4 +75,13 @@ class AuthenticationTest extends TestCase
 
         $this->assertAuthenticatedAs($user);
     }
+
+    public function test_the_e_mail_is_accepted_in_any_case_and_with_spaces(): void
+    {
+        $user = User::factory()->create(['email' => 'maria@feevale.br']);
+
+        $this->post('/login', ['email' => '  Maria@Feevale.BR ', 'password' => 'password']);
+
+        $this->assertAuthenticatedAs($user);
+    }
 }

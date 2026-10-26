@@ -84,7 +84,12 @@ export const indicators = (state, period) => {
     };
 };
 
-const cell = (value) => `"${String(value ?? '').replaceAll('"', '""')}"`;
+// A cell starting with = + - @ would run as a formula in Excel.
+const cell = (value) => {
+    const text = String(value ?? '');
+    const safe = /^[=+\-@\t\r]/.test(text) ? `'${text}` : text;
+    return `"${safe.replaceAll('"', '""')}"`;
+};
 
 export const toCsv = (rows) => rows.map((row) => row.map(cell).join(';')).join('\r\n');
 

@@ -2,8 +2,9 @@
 
 Versão para celular da agenda do projeto Sustentabilidade Econômica e Financeira.
 App Android/iOS com versão PWA para o navegador. O modo demonstração usa dados
-fictícios no aparelho e funciona offline. O modo servidor usa a API descrita em
-[API.md](API.md), que ainda precisa ser implementada.
+fictícios no aparelho e funciona offline. O modo servidor entra com a conta da
+equipe e lê e grava pela API do Laravel ([API.md](API.md),
+[detalhes](../docs/mobile-integration.md)), sobre os mesmos dados da web.
 
 Para testar o demo no navegador, basta um servidor estático. Os projetos nativos
 precisam de Node e das ferramentas de Android/iOS.
@@ -55,12 +56,8 @@ contatos. O e-mail abre no aplicativo do funcionário; ele escolhe a conta e
 confirma o envio. Lembretes exigem consentimento e perfil com escrita.
 
 Nos detalhes do atendimento, use “Google Agenda” para criar uma cópia ou exporte
-um `.ics`. Na agenda, “Importar de outra agenda” permite selecionar um arquivo
-`.ics`, revisar o evento e escolher atendido, serviço e responsável. Duplicados
-e conflitos são recusados. A cópia não é sincronizada automaticamente.
-
-O Google exporta arquivos pelo site no computador, não pelo app. A leitura direta
-da conta exige OAuth e o servidor. Veja os [detalhes e limites](../docs/calendar-integrations.md).
+um `.ics`. A cópia não é sincronizada automaticamente. Veja os
+[detalhes e limites](../docs/calendar-integrations.md).
 
 ## Formulários vinculados
 
@@ -68,7 +65,8 @@ Os detalhes do atendimento mostram os formulários recebidos pelo servidor,
 inclusive nos atendimentos concluídos. Links usam HTTPS e domínios autorizados;
 a plataforma parceira mantém seu próprio login. No demo a integração fica
 desativada. O [webhook e a revisão de vínculos no web](../docs/forms-integration.md)
-já estão implementados no Laravel; o bootstrap mobile ainda depende da API futura.
+ficam no Laravel; no modo servidor, a fotografia de dados já traz os formulários
+de cada atendimento.
 
 Para habilitar os links em um build de servidor, acrescente
 `MOBILE_FORMS_ALLOWED_HOSTS=formularios.exemplo.com` às variáveis do build. Esse
@@ -80,9 +78,10 @@ valor é público e contém apenas domínios. Nenhum segredo de integração vai
 npm test
 ```
 
-Cobrem as regras do PRD: conflito de horários, transições de status, cópia do
+Cobrem as regras do sistema (conflito de horários, transições de status, cópia do
 checklist ao agendar, permissões por perfil, lembretes, cadastro de atendidos e
-os indicadores do painel.
+os indicadores do painel) e o modo servidor: transporte, sessão só em memória,
+o que cada comando envia e as regras de build.
 
 ## Telas e aparelhos
 
@@ -120,6 +119,7 @@ js/seed.js                                dados fictícios
 js/store.js                               estado e operações do demo/API
 js/api.js                                 transporte HTTP e autenticação
 js/viewport.js                            altura visível e teclado
+js/theme-boot.js                          aplica o tema antes da primeira pintura
 js/views/                                 uma tela por arquivo
 tests/                                    testes de domínio, API e build
 browser-tests/                            layout e interação (Playwright)
@@ -154,27 +154,36 @@ lojas exige assinatura e contas de desenvolvedor próprias.
 assets dos dois projetos. Execute novamente após mudar o JavaScript ou CSS.
 Os arquivos copiados em `android/.../public` e `ios/.../public` são gerados.
 
-## Ligando ao servidor futuro
+## Ligando ao servidor
 
-O modo servidor já faz requisições reais, mas o servidor ainda precisa
-implementar o [contrato da API](API.md). Não há conexão direta ao banco.
+O modo servidor fala só com a API do Laravel; não há conexão direta ao banco.
 
 ```sh
-MOBILE_MODE=server MOBILE_API_URL=https://seu-servidor.example/api/v1 npm run sync
+MOBILE_API_URL=https://agenda.exemplo.org/api/v1 npm run sync:server
 npx cap open android
 # No macOS: npx cap open ios
 ```
 
+`npm run build:server` falha sem uma URL HTTPS. A exceção é `http://localhost`
+ou `http://127.0.0.1`, para testar contra um Laravel na mesma máquina; nesse caso
+inclua a origem do app em `CORS_ALLOWED_ORIGINS` no `.env` do Laravel. No
+servidor, `caderneta-deploy --with-pwa` publica este mesmo app em
+`https://<domínio>/app/`.
+
 Esse build remove o preenchimento de credenciais e os controles de demonstração.
 Login, recuperação de senha, logout e todas as gravações usam a API.
 O token e os dados ficam somente em memória; reabrir o app exige novo login.
-Dados reais não entram no localStorage nem no cache offline do PWA. A recuperação
-de senha envia um link para a página HTTPS do servidor.
+Dados reais não entram no localStorage nem no cache offline do PWA (o service
+worker só é registrado no demo). A recuperação de senha envia um link para a
+página HTTPS do servidor.
 
-O servidor é a autoridade para permissões, conflitos e validação. Em erro de rede
-a alteração não é aplicada; em sessão expirada o app limpa os dados e volta ao
-login. As telas de consulta e o CSV usam a fotografia autorizada do bootstrap.
-Para dados grandes, adaptar o carregamento para paginação no `store.js`.
+O servidor é a autoridade para permissões, conflitos e validação. Cada comando
+leva o que a tela mostrava (status, última alteração, estado do documento), e o
+servidor recusa com uma mensagem quando outra pessoa mudou o registro antes. Em
+erro de rede a alteração não é aplicada e nada cai para dados fictícios; em
+sessão expirada o app limpa os dados e volta ao login. Ao voltar para o app, as
+telas de lista buscam as mudanças da equipe; o menu do avatar tem "Atualizar
+dados". As telas de consulta e o CSV usam a fotografia autorizada do servidor.
 
 ## Pendências conhecidas
 

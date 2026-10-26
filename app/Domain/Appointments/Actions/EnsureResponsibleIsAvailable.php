@@ -57,6 +57,6 @@ final class EnsureResponsibleIsAvailable
                 'start' => DisplayTimezone::toLocal($conflict->starts_at)->format('H:i'),
                 'end' => DisplayTimezone::toLocal($conflict->ends_at)->format('H:i'),
             ]),
-        ]);
+        ])->status(409);
     }
 }

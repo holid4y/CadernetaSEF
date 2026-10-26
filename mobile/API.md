@@ -1,8 +1,9 @@
-# Contrato da API mobile (a implementar no servidor)
+# Contrato da API mobile
 
-O aplicativo não acessa o banco diretamente. O Laravel deve implementar estes
-endpoints sob `MOBILE_API_URL` (por exemplo `https://agenda.example/api/v1`).
-O contrato abaixo é novo; os endpoints ainda não existem neste repositório.
+O aplicativo não acessa o banco diretamente. O Laravel implementa estes
+endpoints sob `MOBILE_API_URL` (por exemplo `https://agenda.example/api/v1`), em
+`routes/api.php`. Como cada parte foi implementada, a concorrência e os testes:
+[docs/mobile-integration.md](../docs/mobile-integration.md).
 
 A API entre servidores para a plataforma de formulários já existe e usa
 autenticação própria. Consulte [o contrato implementado](../docs/forms-integration.md).
@@ -28,11 +29,13 @@ Não há cadastro público: contas e perfis são provisionados pelo administrado
 `counters` e `meta` (objetos). As propriedades dos registros seguem os modelos
 em `js/domain.js` e `js/seed.js`; os exemplos do seed são exclusivamente fictícios.
 Nunca enviar hashes de senha, tokens de outros usuários ou dados fora do escopo
-de acesso do usuário autenticado. O bootstrap usa uma fotografia completa do
-escopo autorizado; paginação pode ser adicionada ao adaptar `store.js` no futuro.
+de acesso do usuário autenticado. O e-mail dos colegas vem `null`, e
+visualizadores recebem `document` e `notes` como `null`. O bootstrap usa uma
+fotografia completa do escopo autorizado; paginação pode ser adicionada ao
+adaptar `store.js` no futuro.
 
 - IDs são números; perfis: `admin`, `team`, `viewer`.
-- Datas são números Unix em **milissegundos**, instantes absolutos. Converta
+- Datas são números Unix em milissegundos, instantes absolutos. Converta
   os campos UTC do banco no serializador. Não envie strings ISO para as telas
   atuais. O app exibe no fuso do aparelho; use America/Sao_Paulo para operação local.
 - `service.documents` é um array de nomes; `appointment.documents` contém
@@ -50,14 +53,18 @@ O cliente só substitui o estado depois de uma resposta de sucesso.
 | --- | --- | --- |
 | `saveClient` | `[input, idOuNull]` | atendido salvo |
 | `scheduleAppointment` | `[input]` | atendimento criado |
-| `rescheduleAppointment` | `[id, {start, end, responsibleId}]` | atendimento |
-| `changeStatus` | `[id, status]` | atendimento |
-| `toggleDocument` | `[appointmentId, documentId]` | documento atualizado |
+| `rescheduleAppointment` | `[id, {start, end, responsibleId, updatedAt?}]` | atendimento |
+| `changeStatus` | `[id, status, from?]` | atendimento |
+| `toggleDocument` | `[appointmentId, documentId, received?]` | documento atualizado |
 | `sendReminder` | `[appointmentId]` | e-mail destinatário |
-| `restoreAppointment` | `[snapshot]` | null |
+| `restoreAppointment` | `[{id, status}]` | null |
 | `setServiceActive` | `[slug, active]` | null |
 | `addServiceDocument` | `[slug, name]` | null |
-| `removeServiceDocument` | `[slug, index]` | null |
+| `removeServiceDocument` | `[slug, index, name?]` | null |
+
+Os argumentos com `?` são opcionais e o `store.js` os preenche com o que a tela
+mostrava: `input.updatedAt` também vale para `saveClient`. Quando não batem com o
+banco, o servidor responde `409` sem alterar nada.
 
 Use uma lista explícita de comandos permitidos e ações de domínio Laravel.
 Nunca execute um nome de função arbitrário recebido do cliente. O servidor
@@ -71,11 +78,13 @@ serviço de e-mail. Regras de referência: `js/domain.js` e testes de domínio.
 
 ## Erros e transporte
 
-- `401`: token expirado/revogado; o app limpa os dados e volta ao login.
+- `401`: token expirado/revogado ou conta desativada; o app limpa os dados e volta ao login.
 - `403`: ação não autorizada.
+- `404`: registro inexistente.
 - `409`: alteração concorrente ou conflito de horário.
-- `422`: `{message, errors: {campo: ["Mensagem em português"]}}`.
-- `429`: limite de tentativas. Aplicar rate limit no login e recuperação.
+- `422`: `{message, errors: {campo: ["Mensagem em português"]}}`, com os nomes de campo do app.
+- `429`: limite de tentativas no login e na recuperação de senha.
+- `503`: o servidor de e-mail não aceitou o lembrete.
 
 HTTPS obrigatório nos builds de servidor. CORS deve permitir as origens nativas
 `https://localhost` (Android), `capacitor://localhost` (iOS) e a origem web de
@@ -84,26 +93,18 @@ Respostas autenticadas devem usar `Cache-Control: no-store`. Nenhum segredo ou
 credencial de banco deve ser incluído no app. Não há fila de gravação offline
 em modo servidor: falhas são exibidas e o usuário pode tentar novamente.
 
-## Importação de calendário
-
-`scheduleAppointment` pode receber `input.externalKey` (string, até 1024
-caracteres). É o UID do evento; em recorrências inclui o identificador da
-ocorrência original. O servidor deve calcular SHA-256 e gravar o valor em
-`appointments.calendar_import_key`, protegido por índice único. Retornar `422`
-para evento já importado, inclusive sob concorrência. Não confiar na checagem
-prévia do aparelho. Esse campo não substitui autorização nem validação de horário.
-O Laravel já inclui a migração e a regra na ação `ScheduleAppointment`.
+## Contatos e calendário
 
 Atalhos `mailto:` e `wa.me` são manuais e não chamam `sendReminder`. O funcionário
 escolhe a conta de e-mail remetente no aplicativo do aparelho. Só a operação de
 envio do servidor pode atualizar `reminder_sent_at`.
 
-Detalhes, limites da importação e requisitos futuros de OAuth:
-[integrações de calendário](../docs/calendar-integrations.md).
+A exportação para o Google Agenda e o arquivo `.ics` são gerados no aparelho, sem
+chamar a API: [integrações de calendário](../docs/calendar-integrations.md).
 
 ## Formulários do parceiro
 
-O serializador futuro de `/mobile/bootstrap` deve incluir em cada atendimento:
+O serializador de `/mobile/bootstrap` inclui em cada atendimento:
 
 ```json
 {
@@ -120,9 +121,9 @@ O serializador futuro de `/mobile/bootstrap` deve incluir em cada atendimento:
 }
 ```
 
-Use `appointments.integration_id`, nunca o ID numérico ou um hash de dados
-pessoais. `forms` vem do relacionamento `externalForms`; inclua apenas registros
-do atendimento autorizado. Gere os links com `App\Support\FormLinks` e envie
+O identificador é `appointments.integration_id`, nunca o ID numérico ou um hash
+de dados pessoais. `forms` vem do relacionamento `externalForms`, só com
+registros do atendimento. Os links são gerados por `App\Support\FormLinks`, com
 `url: null` nos removidos. `formsEnabled` acompanha `services.forms.enabled`.
 Visualizadores recebem `formCreateUrl: null`. A associação manual é feita no web.
 
