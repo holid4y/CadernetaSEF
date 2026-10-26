@@ -29,7 +29,7 @@ export function calendarFile(event) {
     const lines = [
         'BEGIN:VCALENDAR',
         'VERSION:2.0',
-        'PRODID:-//Agenda Contabil//PT-BR',
+        'PRODID:-//Caderneta SEF//PT-BR',
         'CALSCALE:GREGORIAN',
         'BEGIN:VEVENT',
         `UID:${escapeText(event.uid)}`,
@@ -73,6 +73,6 @@ export function appointmentEvent(state, appointment) {
         start: appointment.start,
         end: appointment.end,
         location: appointment.location ?? '',
-        description: 'Atendimento da Agenda Contábil. Confira os detalhes e documentos na plataforma.',
+        description: 'Atendimento da Caderneta SEF. Confira os detalhes e documentos na plataforma.',
     };
 }

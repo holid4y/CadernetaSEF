@@ -78,7 +78,7 @@ valor é público e contém apenas domínios. Nenhum segredo de integração vai
 npm test
 ```
 
-Cobrem as regras do PRD (conflito de horários, transições de status, cópia do
+Cobrem as regras do sistema (conflito de horários, transições de status, cópia do
 checklist ao agendar, permissões por perfil, lembretes, cadastro de atendidos e
 os indicadores do painel) e o modo servidor: transporte, sessão só em memória,
 o que cada comando envia e as regras de build.

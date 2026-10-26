@@ -245,8 +245,6 @@ mobile/         app Android/iOS/PWA
 docs/           implantação, banco, operação, app e integrações
 ```
 
-O [`PRD.md`](PRD.md) tem os requisitos, as regras de domínio e os marcos do projeto.
-
 ## Fontes consultadas
 
 Estilo de código e regras de domínio:

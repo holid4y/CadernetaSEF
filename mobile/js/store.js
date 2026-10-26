@@ -148,7 +148,7 @@ export const store = {
     async login(email, password) {
         if (!this.isDemo) {
             try {
-                const auth = await api.request('/login', { method: 'POST', body: { email: email.trim().toLowerCase(), password, device_name: 'Agenda Contábil mobile' } });
+                const auth = await api.request('/login', { method: 'POST', body: { email: email.trim().toLowerCase(), password, device_name: 'Caderneta SEF mobile' } });
                 if (!auth?.token || !auth?.user?.id) throw new domain.ValidationError('Resposta inválida do servidor.');
                 api.setToken(auth.token);
                 const response = await api.request('/mobile/bootstrap');
