@@ -86,7 +86,7 @@ Na EC2, com o domínio já apontando para ela:
 sudo apt-get update && sudo apt-get install -y git
 git clone https://github.com/holid4y/Agenda-Contabil.git ~/Agenda-Contabil
 cd ~/Agenda-Contabil
-sudo deploy/aws/bin/provision.sh agenda.exemplo.org ti@exemplo.org
+sudo deploy/aws/bin/provision.sh agenda.exemplo.org
 ```
 
 O `provision.sh` pode rodar de novo sempre que os arquivos de `deploy/aws` mudarem. Ele:
@@ -156,15 +156,42 @@ responder, a versão anterior volta sozinha. Rollback manual e demais cuidados:
 
 ## Apps Android e iOS
 
-Os projetos nativos usam o mesmo código do PWA. Para gerar um build que fala com
-o servidor:
+Os projetos nativos usam o mesmo código do PWA.
+
+### Android (APK)
+
+É preciso JDK 21 (o Capacitor 8 compila em Java 21) e o Android SDK com a
+plataforma 36 e os build-tools 36. Sem o Android Studio, os dois podem ficar em
+`~/Android` (`jdk-21` e `Sdk`).
 
 ```sh
 cd mobile
 npm ci
 MOBILE_API_URL=https://agenda.exemplo.org/api/v1 npm run sync:server
-npx cap open android   # no macOS: npx cap open ios
+cd android
+JAVA_HOME=~/Android/jdk-21 ANDROID_HOME=~/Android/Sdk ./gradlew assembleRelease
+BT=~/Android/Sdk/build-tools/36.1.0
+$BT/zipalign -P 16 -f 4 app/build/outputs/apk/release/app-release-unsigned.apk /tmp/alinhado.apk
+$BT/apksigner sign --ks ~/Android/keys/caderneta-sef-release.jks --ks-key-alias caderneta-sef \
+    --ks-pass file:$HOME/Android/keys/caderneta-sef-release.password --out CadernetaSEF.apk /tmp/alinhado.apk
+$BT/apksigner verify --print-certs CadernetaSEF.apk
 ```
+
+A chave de assinatura (`.jks` e a senha) fica fora do repositório. **Guarde uma
+cópia dela no cofre de senhas do projeto**: toda atualização do app precisa ser
+assinada com a mesma chave, senão os aparelhos não aceitam a nova versão. Para
+instalar o APK direto (sem loja), o aparelho precisa permitir apps de fontes
+desconhecidas. A Play Store exige uma conta de desenvolvedor Google.
+
+Antes de cada nova versão, aumente `versionCode` (e `versionName`) em
+`mobile/android/app/build.gradle`.
+
+### iPhone
+
+Um app iOS instalável exige macOS com Xcode e uma conta Apple Developer. Sem
+ela, o iPhone usa o PWA, que é o mesmo app: no Safari, abra
+`https://<domínio>/app/` → Compartilhar → "Adicionar à Tela de Início". Ele abre
+em tela cheia, com ícone próprio, e fala com a mesma API.
 
 A API aceita chamadas das origens `https://localhost` (Android) e
 `capacitor://localhost` (iOS), configuradas em `CORS_ALLOWED_ORIGINS`. Detalhes

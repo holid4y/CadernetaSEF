@@ -48,7 +48,8 @@ fi
 
 read -rsp "Password of the RDS master user ($MASTER): " MASTER_PASSWORD
 echo
-generate() { tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 32; }
+# Every stage reads its whole input, so pipefail never sees a SIGPIPE.
+generate() { head -c 96 /dev/urandom | base64 -w 0 | tr -dc 'A-Za-z0-9' | cut -c 1-32; }
 AGENDA_OWNER_PASSWORD=$(generate)
 AGENDA_APP_PASSWORD=$(generate)
 AGENDA_REPORTS_PASSWORD=$(generate)

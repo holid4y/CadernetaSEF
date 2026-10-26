@@ -7,9 +7,9 @@ pessoas físicas, MEIs, pequenas empresas e entidades sem fins lucrativos do Val
 do Rio dos Sinos em imposto de renda, guias de tributos, fluxo de caixa,
 orçamento e prestação de contas.
 
-Há uma [prévia no GitHub Pages](https://unusualhatter.github.io/Agenda-Contabil/)
+Há uma [prévia no GitHub Pages](https://holid4y.github.io/Agenda-Contabil/)
 com dados fictícios. O login já vem preenchido e nada do que você mudar lá é
-salvo. A [demonstração mobile](https://unusualhatter.github.io/Agenda-Contabil/app/)
+salvo. A [demonstração mobile](https://holid4y.github.io/Agenda-Contabil/app/)
 usa dados fictícios salvos apenas no aparelho.
 
 O app Android/iOS/PWA fica em [`mobile/`](mobile/README.md). Em modo servidor ele

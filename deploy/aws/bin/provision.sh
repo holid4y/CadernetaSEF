@@ -4,15 +4,16 @@
 # configures PHP-FPM, Nginx with Let's Encrypt, the queue worker and the
 # scheduler. It creates nothing in AWS and can run again at any time.
 #
-#   sudo deploy/aws/bin/provision.sh agenda.example.org ti@example.org
+#   sudo deploy/aws/bin/provision.sh agenda.example.org
 #
 # The domain must already point to this instance (port 80 open to the
-# internet for the certificate challenge).
+# internet for the certificate challenge). Let's Encrypt no longer sends
+# expiry e-mails, so registering an address is optional (second argument).
 
 set -euo pipefail
 
-DOMAIN=${1:?"Usage: provision.sh <domain> <e-mail for Let's Encrypt notices>"}
-CERT_EMAIL=${2:?"Usage: provision.sh <domain> <e-mail for Let's Encrypt notices>"}
+DOMAIN=${1:?"Usage: provision.sh <domain> [e-mail for Let's Encrypt]"}
+CERT_EMAIL=${2:-}
 APP_DIR=/var/www/caderneta-sef
 DEPLOY_USER=caderneta
 SOURCE=$(cd "$(dirname "$0")/.." && pwd)
@@ -26,7 +27,7 @@ fail() { echo "provision: $*" >&2; exit 1; }
 
 echo "==> Packages"
 apt-get update -q
-DEBIAN_FRONTEND=noninteractive apt-get install -y -q \
+DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a apt-get install -y -q \
     nginx php-fpm php-cli php-pgsql php-mbstring php-xml php-curl php-intl php-bcmath php-zip php-gd \
     composer nodejs npm postgresql-client git unzip acl curl certbot unattended-upgrades
 
@@ -88,10 +89,20 @@ install -d -m 755 /var/www/letsencrypt
 rm -f /etc/nginx/sites-enabled/default
 SITE=/etc/nginx/sites-available/caderneta-sef.conf
 if [ ! -f "/etc/letsencrypt/live/$DOMAIN/fullchain.pem" ]; then
+    # The certificate is only issued when the domain already points here.
+    TOKEN=$(curl -fsS -X PUT http://169.254.169.254/latest/api/token -H 'X-aws-ec2-metadata-token-ttl-seconds: 60')
+    PUBLIC_IP=$(curl -fsS -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/public-ipv4)
+    RESOLVED=$(getent ahostsv4 "$DOMAIN" | awk '{ print $1; exit }')
+    [ "$RESOLVED" = "$PUBLIC_IP" ] || fail "$DOMAIN points to ${RESOLVED:-nothing}, but this instance is $PUBLIC_IP. Fix the DNS record and run again."
     printf 'server {\n    listen 80;\n    listen [::]:80;\n    server_name %s;\n    location /.well-known/acme-challenge/ { root /var/www/letsencrypt; }\n    location / { return 404; }\n}\n' "$DOMAIN" > "$SITE"
     ln -sfn "$SITE" /etc/nginx/sites-enabled/caderneta-sef.conf
     nginx -t && systemctl reload nginx
-    certbot certonly --webroot -w /var/www/letsencrypt -d "$DOMAIN" -m "$CERT_EMAIL" --agree-tos --non-interactive --no-eff-email
+    if [ -n "$CERT_EMAIL" ]; then
+        REGISTRATION=(-m "$CERT_EMAIL" --no-eff-email)
+    else
+        REGISTRATION=(--register-unsafely-without-email)
+    fi
+    certbot certonly --webroot -w /var/www/letsencrypt -d "$DOMAIN" "${REGISTRATION[@]}" --agree-tos --non-interactive
 fi
 sed -e "s|__DOMAIN__|$DOMAIN|g" -e "s|__PHP_SOCKET__|$PHP_SOCKET|g" "$SOURCE/nginx/caderneta-sef.conf" > "$SITE"
 ln -sfn "$SITE" /etc/nginx/sites-enabled/caderneta-sef.conf

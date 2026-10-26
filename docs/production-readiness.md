@@ -48,15 +48,15 @@ A EC2 ainda não tem a aplicação instalada.
 | 4 | Papéis e permissões validados | concluído no RDS real: `verify.sql` aprovado e operações proibidas negadas |
 | 5 | Login e autorização | validado (testes web e API, simulação) |
 | 6 | Operações web persistindo | validado (testes e simulação); **pendente** em produção |
-| 7 | App em modo servidor autenticando pela API | validado na simulação com o app real; **pendente** em produção (domínio HTTPS) |
+| 7 | App em modo servidor autenticando pela API | PWA publicado em `https://cadernetasef.duckdns.org/app/` apontando para a API de produção; APK gerado com a mesma URL e CORS conferido para as origens nativas; falta testar em aparelhos físicos |
 | 8 | Mudanças do app na web e vice-versa | validado na simulação, nos dois sentidos, com navegador |
 | 9 | Conflitos bloqueados, inclusive em concorrência | validado (`ConcurrentChangesTest`, 6 processos; constraint no banco) |
 | 10 | Histórico e auditoria preservados | validado (triggers, permissões, auditoria com o autor vindo do token) |
 | 11 | Lembretes e tarefas sem envios indevidos | validado localmente (interruptor, consentimento, envio único); envio real **pendente** |
 | 12 | Integração de formulários preservada | validado (todos os testes existentes passam) |
 | 13 | Testes relevantes aprovados | validado: 263 PHP, 49 mobile, 58 de layout (Chromium e WebKit) |
-| 14 | Builds de produção | validado: web (`npm run build`), app demo e servidor; APK/IPA **pendentes** (sem SDK Android e sem macOS aqui) |
-| 15 | HTTPS e controles no ambiente implantado | **pendente** (domínio e primeira implantação) |
+| 14 | Builds de produção | validado: web, app demo e servidor; APK de release assinado e verificado (26/10/2026). iOS nativo exige macOS e conta Apple: o iPhone usa o PWA |
+| 15 | HTTPS e controles no ambiente implantado | concluído em 26/10/2026: `https://cadernetasef.duckdns.org` com certificado Let's Encrypt, redirecionamento HTTP→HTTPS, CSP, HSTS e demais cabeçalhos, API sem token recusada |
 | 16 | Documentação de deploy, manutenção e restauração | concluída: este arquivo, [deployment-aws.md](deployment-aws.md), [database-production.md](database-production.md), [mobile-integration.md](mobile-integration.md), [operations.md](operations.md) |
 
 ## Antes da primeira implantação

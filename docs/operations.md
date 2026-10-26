@@ -162,7 +162,7 @@ artisan queue:forget <id>   # descartar
   Reinicie em horário combinado quando `/var/run/reboot-required` existir; os
   serviços voltam sozinhos.
 - **Nova versão do PHP** (upgrade do Ubuntu). O pool e o `.ini` ficam na pasta
-  da versão: rode `sudo deploy/aws/bin/provision.sh <domínio> <e-mail>` de novo
+  da versão: rode `sudo deploy/aws/bin/provision.sh <domínio>` de novo
   e um deploy.
 - **RDS.** As atualizações menores e a janela de manutenção ficam no console.
   O banco fica indisponível por alguns minutos; avise a equipe.
