@@ -58,34 +58,40 @@ BEGIN
     END LOOP;
 
     IF has_schema_privilege('agenda_app', 'public', 'CREATE') OR has_schema_privilege('agenda_reports', 'public', 'CREATE') THEN
-        problems := problems || 'agenda_app and agenda_reports must not create objects';
+        problems := array_append(problems, 'agenda_app and agenda_reports must not create objects');
+    END IF;
+
+    -- A membership (in agenda_owner or a pg_* role) would hand over its rights through SET ROLE.
+    IF EXISTS (SELECT FROM pg_auth_members m JOIN pg_roles r ON r.oid = m.member
+               WHERE r.rolname IN ('agenda_app', 'agenda_reports')) THEN
+        problems := array_append(problems, 'agenda_app and agenda_reports must not be members of another role');
     END IF;
 
     IF EXISTS (SELECT FROM pg_roles WHERE rolname IN ('agenda_owner', 'agenda_app', 'agenda_reports')
                AND (rolsuper OR rolcreaterole OR rolcreatedb OR rolbypassrls)) THEN
-        problems := problems || 'application roles must not be superuser, create roles or databases, or bypass RLS';
+        problems := array_append(problems, 'application roles must not be superuser, create roles or databases, or bypass RLS');
     END IF;
 
     IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tableowner IN ('agenda_app', 'agenda_reports')) THEN
-        problems := problems || 'tables must belong to the owner, not to agenda_app or agenda_reports';
+        problems := array_append(problems, 'tables must belong to the owner, not to agenda_app or agenda_reports');
     END IF;
 
     IF NOT EXISTS (SELECT FROM pg_extension WHERE extname = 'btree_gist') THEN
-        problems := problems || 'extension btree_gist is missing';
+        problems := array_append(problems, 'extension btree_gist is missing');
     END IF;
 
     IF NOT EXISTS (SELECT FROM pg_constraint WHERE conname = 'appointments_no_overlap' AND contype = 'x') THEN
-        problems := problems || 'exclusion constraint appointments_no_overlap is missing';
+        problems := array_append(problems, 'exclusion constraint appointments_no_overlap is missing');
     END IF;
 
     IF (SELECT count(*) FROM pg_trigger WHERE NOT tgisinternal AND tgenabled = 'O' AND tgname IN (
             'appointments_keep_rows', 'appointment_activities_append_only', 'appointment_activities_no_truncate',
             'data_audits_append_only', 'data_audits_no_truncate', 'clients_audit', 'users_audit')) <> 7 THEN
-        problems := problems || 'one of the history, audit or keep-rows triggers is missing or disabled';
+        problems := array_append(problems, 'one of the history, audit or keep-rows triggers is missing or disabled');
     END IF;
 
     IF NOT coalesce((SELECT ssl FROM pg_stat_ssl WHERE pid = pg_backend_pid()), false) THEN
-        problems := problems || 'this connection is not encrypted';
+        problems := array_append(problems, 'this connection is not encrypted');
     END IF;
 
     IF cardinality(problems) > 0 THEN

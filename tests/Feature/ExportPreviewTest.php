@@ -6,6 +6,7 @@ namespace Tests\Feature;
 
 use App\Models\Client;
 use App\Models\ExternalForm;
+use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -65,6 +66,18 @@ class ExportPreviewTest extends TestCase
     {
         $this->seed(DatabaseSeeder::class);
         Client::factory()->create(['email' => 'maria.souza@gmail.com']);
+
+        $this->artisan('preview:export', ['url' => 'https://example.github.io/Agenda', '--output' => $this->output])
+            ->assertFailed();
+
+        $this->assertDirectoryDoesNotExist(base_path($this->output));
+    }
+
+    public function test_it_refuses_a_copy_of_the_real_database_even_without_client_e_mails(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+        User::factory()->create(['email' => 'coordenacao@feevale.br']);
+        Client::factory()->create(['email' => null]);
 
         $this->artisan('preview:export', ['url' => 'https://example.github.io/Agenda', '--output' => $this->output])
             ->assertFailed();

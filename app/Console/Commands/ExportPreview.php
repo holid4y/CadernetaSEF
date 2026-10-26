@@ -45,8 +45,11 @@ final class ExportPreview extends Command
             ->whereNotNull('email')
             ->whereRaw('email !~* ?', ['@([a-z0-9-]+\\.)*example\\.(com|org|net)$'])
             ->exists();
+        // Clients without e-mail slip past the check above; a copy of the real
+        // database is still given away by its staff accounts.
+        $realStaff = User::query()->where('email', 'not like', '%@agenda.local')->exists();
 
-        if ($realContacts || ExternalForm::query()->exists()) {
+        if ($realContacts || $realStaff || ExternalForm::query()->exists()) {
             $this->components->error('Found real contacts or external forms. The preview is built from the demo seed only.');
 
             return self::FAILURE;

@@ -47,8 +47,7 @@ final class ResetUserPassword extends Command
                 'password' => $validator->validated()['password'],
                 'remember_token' => Str::random(60),
             ])->save();
-            $user->tokens()->delete();
-            DB::table('sessions')->where('user_id', $user->id)->delete();
+            $user->signOutEverywhere();
         });
 
         $this->components->info("New password saved for {$user->email}; other sessions were closed.");

@@ -7,6 +7,7 @@ namespace Tests\Feature\Auth;
 use App\Models\User;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
@@ -102,5 +103,28 @@ class PasswordResetTest extends TestCase
         }
 
         $this->post('/forgot-password', ['email' => 'outra@feevale.br'])->assertTooManyRequests();
+    }
+
+    public function test_a_reset_password_signs_out_every_device(): void
+    {
+        Notification::fake();
+        $user = User::factory()->create();
+        $user->createToken('celular');
+        DB::table('sessions')->insert(['id' => 'sessao-antiga', 'user_id' => $user->id, 'payload' => '', 'last_activity' => time()]);
+        $this->post('/forgot-password', ['email' => $user->email]);
+
+        Notification::assertSentTo($user, ResetPassword::class, function (ResetPassword $notification) use ($user): bool {
+            $this->post('/reset-password', [
+                'token' => $notification->token,
+                'email' => $user->email,
+                'password' => 'nova-senha-2026',
+                'password_confirmation' => 'nova-senha-2026',
+            ])->assertSessionHasNoErrors();
+
+            return true;
+        });
+
+        $this->assertSame(0, $user->tokens()->count());
+        $this->assertDatabaseMissing('sessions', ['id' => 'sessao-antiga']);
     }
 }

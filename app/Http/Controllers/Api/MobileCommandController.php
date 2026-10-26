@@ -362,7 +362,12 @@ class MobileCommandController extends Controller
             'input.end.gt' => __('appointments.errors.invalid_period'),
         ];
 
-        return [...$values, ...Validator::make($values, $rules, $messages)->validate()];
+        // Validated data only keeps the nested keys that have a rule (an input with
+        // a rule for updatedAt would lose every other field), so the checked values
+        // are returned as they came.
+        Validator::make($values, $rules, $messages)->validate();
+
+        return $values;
     }
 
     /**

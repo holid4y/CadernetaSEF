@@ -36,8 +36,7 @@ final class DeactivateUser extends Command
 
         DB::transaction(function () use ($user): void {
             $user->update(['active' => false]);
-            $user->tokens()->delete();
-            DB::table('sessions')->where('user_id', $user->id)->delete();
+            $user->signOutEverywhere();
         });
 
         $this->components->info("{$user->email} was blocked and signed out everywhere.");

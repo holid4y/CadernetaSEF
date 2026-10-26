@@ -38,6 +38,7 @@ class NewPasswordController extends Controller
                     // Any "remember me" cookie left on another device stops working.
                     'remember_token' => Str::random(60),
                 ])->save();
+                $user->signOutEverywhere();
 
                 event(new PasswordReset($user));
             },

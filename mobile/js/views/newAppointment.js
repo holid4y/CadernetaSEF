@@ -21,6 +21,9 @@ const SLOT_TO = 20 * 60;
 
 let draft = null;
 
+// The start time can come from a link, so only a plain HH:mm is taken from it.
+const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
+
 const newDraft = (query, state, user) => {
     const [day, time] = (query.inicio ?? '').split('T');
     const owner = responsibles(state).find((u) => u.id === user.id) ?? responsibles(state)[0];
@@ -34,7 +37,7 @@ const newDraft = (query, state, user) => {
         serviceSlug: null,
         serviceDetails: '',
         date: /^\d{4}-\d{2}-\d{2}$/.test(day ?? '') ? day : dayKey(Date.now()),
-        start: time ?? '',
+        start: TIME.test(time ?? '') ? time : '',
         end: '',
         duration: 60,
         responsibleId: owner.id,
@@ -285,7 +288,7 @@ const stepWhen = (state) => {
         <form class="form" id="when" style="margin-top:14px" novalidate>
             <div class="field">
                 <label for="date">Data</label>
-                <input class="input" id="date" type="date" value="${draft.date}" required>
+                <input class="input" id="date" type="date" value="${esc(draft.date)}" required>
                 <span class="hint-text" id="weekday">${draft.date ? capitalize(weekday(at(draft.date, '12:00'))) : ''}</span>
             </div>
             <div class="field">
@@ -302,8 +305,8 @@ const stepWhen = (state) => {
                 <span class="hint-text">Os horários riscados já estão ocupados para este responsável.</span>
             </div>
             <div class="field-row">
-                <div class="field"><label for="start">Início</label><input class="input" id="start" type="time" step="900" value="${draft.start}"></div>
-                <div class="field"><label for="end">Fim</label><input class="input" id="end" type="time" step="900" value="${draft.end}"></div>
+                <div class="field"><label for="start">Início</label><input class="input" id="start" type="time" step="900" value="${esc(draft.start)}"></div>
+                <div class="field"><label for="end">Fim</label><input class="input" id="end" type="time" step="900" value="${esc(draft.end)}"></div>
             </div>
             <p class="error-text" id="problem" role="alert" ${message ? '' : 'hidden'}>${esc(message)}</p>
             <div class="field">

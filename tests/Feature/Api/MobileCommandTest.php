@@ -76,6 +76,30 @@ class MobileCommandTest extends TestCase
             ->assertJsonPath('state.clients.0.id', $client->id);
     }
 
+    public function test_clients_are_saved_with_the_payload_the_app_sends(): void
+    {
+        $form = [
+            'type' => 'individual',
+            'name' => 'Joana Lima',
+            'tradeName' => '',
+            'phone' => '(51) 99812-4410',
+            'email' => 'joana@example.com',
+            'document' => '529.982.247-25',
+            'notes' => 'Prefere atendimento pela manhã',
+            'acceptsReminders' => true,
+            'active' => true,
+        ];
+
+        $created = $this->command('saveClient', [[...$form, 'updatedAt' => null], null])->assertOk();
+        $client = Client::query()->sole();
+        $this->assertSame('Joana Lima', $client->name);
+        $this->assertSame('Prefere atendimento pela manhã', $client->notes);
+
+        $this->command('saveClient', [[...$form, 'name' => 'Joana Lima Souza', 'updatedAt' => $created->json('result.updatedAt')], $client->id])
+            ->assertOk()
+            ->assertJsonPath('result.name', 'Joana Lima Souza');
+    }
+
     public function test_client_errors_point_to_the_fields_of_the_app_form(): void
     {
         Client::factory()->create(['document' => '529.982.247-25']);
