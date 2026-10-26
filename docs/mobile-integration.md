@@ -1,7 +1,7 @@
 # Integração do app com o servidor
 
-O app (Android, iOS e PWA) tem dois modos. No **demo**, os dados são fictícios e
-ficam no aparelho; é o que o GitHub Pages publica. No **servidor**, o app autentica
+O app (Android, iOS e PWA) tem dois modos. No demo, os dados são fictícios e
+ficam no aparelho; é o que o GitHub Pages publica. No servidor, o app autentica
 no Laravel e toda leitura e gravação passa por `/api/v1`, nas mesmas regras e no
 mesmo banco da web. Este documento descreve o modo servidor como está implementado.
 O resumo do contrato também está em [`mobile/API.md`](../mobile/API.md).
@@ -58,7 +58,7 @@ web ── sessão + CSRF ──────────────────
 - Cada atendimento traz também `integrationId`, `formsEnabled`, `formCreateUrl`
   e `forms` (formulários vinculados, links validados por `FormLinks`).
 
-O que **não** sai do servidor:
+O que não sai do servidor:
 
 - senha, hash, `remember_token` ou tokens;
 - o e-mail dos colegas: só o da própria pessoa;

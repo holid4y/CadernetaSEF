@@ -27,8 +27,8 @@ Conferido no console em 22/10/2026, em `sa-east-1`:
 
 | Recurso | Situação |
 | --- | --- |
-| EC2 `caderneta-sef-web` | t3.small, **Ubuntu 26.04** (não 24.04), em execução, IP público automático, IMDSv2 obrigatório, sem IAM role |
-| RDS `caderneta-sef-db` | PostgreSQL, db.t4g.micro, Single-AZ, `Publicly accessible = No`, banco **`caderneta_sef`**, usuário mestre `postgres`, porta 5432, CA `rds-ca-rsa2048-g1` |
+| EC2 `caderneta-sef-web` | t3.small, Ubuntu 26.04 (não 24.04), em execução, IP público automático, IMDSv2 obrigatório, sem IAM role |
+| RDS `caderneta-sef-db` | PostgreSQL, db.t4g.micro, Single-AZ, `Publicly accessible = No`, banco `caderneta_sef`, usuário mestre `postgres`, porta 5432, CA `rds-ca-rsa2048-g1` |
 | Rede | EC2 e RDS na mesma VPC; o RDS aceita 5432 do security group da EC2 (`rds-ec2-1` ← `ec2-rds-1`) |
 
 Os scripts funcionam em Ubuntu 24.04 ou mais novo: a versão do PHP é detectada,
@@ -36,19 +36,19 @@ e não fixada.
 
 Pendências de infraestrutura, que dependem de quem administra a conta:
 
-1. **Domínio.** É preciso um nome (por exemplo, um subdomínio da Feevale) com
+1. Domínio. É preciso um nome (por exemplo, um subdomínio da Feevale) com
    registro A apontando para a EC2. O Let's Encrypt não emite certificado para os
    nomes `*.amazonaws.com`, e o app e o PWA exigem HTTPS.
-2. **IP fixo.** O IP público automático muda quando a instância é parada e
+2. IP fixo. O IP público automático muda quando a instância é parada e
    iniciada, e o domínio deixaria de apontar para ela. Um Elastic IP associado
    resolve. Ele tem o mesmo preço por hora do IP público que a instância já usa,
    mas é um recurso novo: crie só com a aprovação de quem paga a conta.
-3. **Security group da EC2.** Entrada 80 e 443 de `0.0.0.0/0` e `::/0`. SSH
+3. Security group da EC2. Entrada 80 e 443 de `0.0.0.0/0` e `::/0`. SSH
    (22) só de onde a equipe administra (veja "Acesso à instância").
-4. **Limpeza.** Remova do security group `cadernetasef-db-access` a regra de
+4. Limpeza. Remova do security group `cadernetasef-db-access` a regra de
    entrada `177.174.194.242/32`. Com o banco privado ela não tem efeito, mas
    deixaria o banco exposto a esse IP se alguém um dia ligasse o acesso público.
-5. **Proteções.** Ative *Termination protection* na EC2 e *Deletion protection*
+5. Proteções. Ative *Termination protection* na EC2 e *Deletion protection*
    no RDS (Modify → sem custo). Em *Maintenance & backups*, confira se a
    retenção de backups automáticos é de pelo menos 7 dias.
 
@@ -66,12 +66,12 @@ Nada foi criado na AWS por este trabalho. Pontos de atenção:
 O banco só é alcançável de dentro da VPC, então os comandos de banco rodam na EC2.
 Formas de entrar, da mais simples à mais segura:
 
-- **SSH com a chave da instância**, com a regra de entrada 22 restrita à sua faixa
+- SSH com a chave da instância, com a regra de entrada 22 restrita à sua faixa
   de IP. Em internet móvel o IP muda; use a faixa da operadora apenas enquanto
   trabalha e remova a regra depois.
-- **EC2 Instance Connect** pelo console, com a regra 22 vinda da prefix list
+- EC2 Instance Connect pelo console, com a regra 22 vinda da prefix list
   `com.amazonaws.sa-east-1.ec2-instance-connect`.
-- **Systems Manager Session Manager**, sem porta aberta: anexe à EC2 uma IAM role
+- Systems Manager Session Manager, sem porta aberta: anexe à EC2 uma IAM role
   com a política `AmazonSSMManagedInstanceCore` (sem custo) e use
   `aws ssm start-session` com a AWS CLI e o `session-manager-plugin`. Também
   permite túnel para o RDS (`AWS-StartPortForwardingSessionToRemoteHost`).
@@ -97,7 +97,7 @@ O `provision.sh` pode rodar de novo sempre que os arquivos de `deploy/aws` mudar
   para e indica a instalação pelo NodeSource;
 - cria 2 GiB de swap, o usuário `caderneta` e `/var/www/caderneta-sef`;
 - cria `shared/.env` a partir de [`env.production.example`](../deploy/aws/env.production.example),
-  com uma `APP_KEY` nova. **Guarde essa chave no cofre de senhas do projeto**:
+  com uma `APP_KEY` nova. Guarde essa chave no cofre de senhas do projeto:
   sem ela, CPF/CNPJ, observações e links de formulários ficam ilegíveis;
 - baixa o pacote de certificados do RDS para `/etc/ssl/certs/rds-global-bundle.pem`;
 - configura o pool do PHP-FPM, o Nginx com certificado do Let's Encrypt

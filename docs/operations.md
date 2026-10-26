@@ -4,7 +4,7 @@ O dia a dia do servidor: serviços, deploy, rollback, contas, senhas, filas,
 logs, manutenção e resposta a incidentes. Instalação:
 [deployment-aws.md](deployment-aws.md). Banco: [database-production.md](database-production.md).
 
-Comandos de banco e de aplicação rodam **na EC2**, como o usuário `caderneta`.
+Comandos de banco e de aplicação rodam na EC2, como o usuário `caderneta`.
 Para não repetir o caminho:
 
 ```sh
@@ -58,7 +58,7 @@ Sequência do deploy:
 6. troca a versão, recarrega o PHP-FPM e reinicia a fila;
 7. testa `/up` e, se falhar, volta sozinho para a versão anterior.
 
-O rollback devolve **o código**, não o banco. As migrations são aditivas, então
+O rollback devolve o código, não o banco. As migrations são aditivas, então
 o código anterior continua funcionando com o schema novo. Se uma migration
 precisar ser desfeita, restaure o snapshot tirado antes do deploy num banco
 novo e aponte a aplicação para ele ([database-production.md](database-production.md#restauração)).
@@ -102,9 +102,9 @@ artisan tinker --execute="App\Models\User::where('email', 'pessoa@feevale.br')->
 | Papéis do banco | `sudo caderneta-database-setup --host <endpoint>`, digitar `ROTATE` | atualiza `.env` e `db-owner.env`, recarrega a aplicação |
 | Mestre do RDS | console → *Modify* → *Master password* | nenhum na aplicação |
 | Segredo do webhook de formulários | novo valor (`openssl rand -hex 32`) em `FORMS_WEBHOOK_SECRET` nos dois servidores, depois `artisan config:cache` e reload do PHP-FPM | chamadas assinadas com o segredo antigo passam a dar 401 |
-| SMTP | `MAIL_*` no `.env`, `config:cache`, reload do PHP-FPM e `systemctl restart caderneta-queue` | — |
+| SMTP | `MAIL_*` no `.env`, `config:cache`, reload do PHP-FPM e `systemctl restart caderneta-queue` | nenhum para quem usa o sistema |
 | Todos os tokens do app | `artisan tinker --execute="Laravel\Sanctum\PersonalAccessToken::query()->delete()"` | todos fazem login de novo |
-| `APP_KEY` | **não troque** sem o procedimento de [database-production.md](database-production.md#criptografia-na-aplicação-e-a-app_key) | dados criptografados ficariam ilegíveis |
+| `APP_KEY` | não troque sem o procedimento de [database-production.md](database-production.md#criptografia-na-aplicação-e-a-app_key) | dados criptografados ficariam ilegíveis |
 
 Depois de qualquer mudança no `.env`:
 
@@ -121,9 +121,13 @@ Em produção o envio começa desligado (`MAIL_MAILER=array`,
 ligar:
 
 1. obtenha a aprovação do projeto para escrever aos atendidos e um serviço de
-   e-mail autorizado (SMTP institucional ou Amazon SES, que tem custo);
-2. preencha `MAIL_MAILER=smtp`, `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`,
-   `MAIL_PASSWORD`, `MAIL_FROM_ADDRESS`;
+   e-mail. O gratuito mais simples é uma conta Gmail do projeto com verificação
+   em 2 etapas e uma "senha de app" (Conta Google → Segurança → Senhas de app),
+   que envia cerca de 500 mensagens por dia para qualquer provedor;
+2. rode `sudo caderneta-mail-setup`. Ele pede o endereço, o servidor SMTP
+   (padrão Gmail) e a senha sem mostrá-la, grava em `MAIL_*` no `.env`,
+   recarrega a aplicação e manda um e-mail de teste. A partir daí, a
+   recuperação de senha da equipe já funciona;
 3. teste com `MAIL_ALWAYS_TO=caixa-de-teste@...`: toda mensagem vai para essa
    caixa. Peça uma redefinição de senha e envie um lembrete de um atendimento
    de teste;
@@ -158,18 +162,18 @@ artisan queue:forget <id>   # descartar
 
 ## Manutenção
 
-- **Sistema operacional.** `unattended-upgrades` aplica atualizações de segurança.
+- Sistema operacional. `unattended-upgrades` aplica atualizações de segurança.
   Reinicie em horário combinado quando `/var/run/reboot-required` existir; os
   serviços voltam sozinhos.
-- **Nova versão do PHP** (upgrade do Ubuntu). O pool e o `.ini` ficam na pasta
+- Nova versão do PHP (upgrade do Ubuntu). O pool e o `.ini` ficam na pasta
   da versão: rode `sudo deploy/aws/bin/provision.sh <domínio>` de novo
   e um deploy.
-- **RDS.** As atualizações menores e a janela de manutenção ficam no console.
+- RDS. As atualizações menores e a janela de manutenção ficam no console.
   O banco fica indisponível por alguns minutos; avise a equipe.
-- **Certificado.** `sudo certbot renew --dry-run` confere a renovação.
-- **Disco.** `df -h`; versões antigas são limpas a cada deploy (ficam 5), e os
+- Certificado. `sudo certbot renew --dry-run` confere a renovação.
+- Disco. `df -h`; versões antigas são limpas a cada deploy (ficam 5), e os
   dumps em `/var/backups/caderneta-sef` duram 14 dias.
-- **Modo manutenção.** `artisan down --retry=60` e `artisan up`.
+- Modo manutenção. `artisan down --retry=60` e `artisan up`.
 
 ## Incidentes
 

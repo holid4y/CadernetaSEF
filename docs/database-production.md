@@ -31,7 +31,7 @@ Arquivos em [`database/sql/`](../database/sql):
 - `roles.sql`, rodado pelo mestre: cria ou troca a senha dos três papéis e
   transfere o banco para `agenda_owner`. As senhas são lidas de variáveis de
   ambiente, então não aparecem no histórico do shell nem na lista de processos;
-- `privileges.sql`, rodado pelo dono depois de **toda** migration: concede o
+- `privileges.sql`, rodado pelo dono depois de toda migration: concede o
   mínimo e define os privilégios padrão das tabelas futuras;
 - `verify.sql`, que qualquer papel roda e que não altera nada: confere
   permissões, triggers, a exclusion constraint, `btree_gist` e se a conexão está
@@ -127,13 +127,13 @@ com a mesma chave (`App\Support\BlindIndex`). Consequências:
 
 ## Backups
 
-1. **Backups automáticos do RDS**, a base de tudo. Em *Maintenance & backups*,
+1. Backups automáticos do RDS, a base de tudo. Em *Maintenance & backups*,
    mantenha a retenção em 7 dias ou mais: permitem restaurar qualquer momento do
    período (point-in-time).
-2. **Snapshot manual** antes de cada deploy com migrations: RDS →
+2. Snapshot manual antes de cada deploy com migrations: RDS →
    `caderneta-sef-db` → *Actions* → *Take snapshot*. Fica guardado até ser
    apagado.
-3. **Dump lógico** com `sudo -u caderneta caderneta-backup`, em
+3. Dump lógico com `sudo -u caderneta caderneta-backup`, em
    `/var/backups/caderneta-sef` (permissão 600, 14 dias). Serve para conferir
    dados ou levar uma cópia para outro lugar com autorização. Ele contém dados
    pessoais: não copie para máquinas pessoais nem para o Git.
@@ -146,7 +146,7 @@ então a aplicação é apontada para ele.
 ### A partir do RDS (recomendado)
 
 1. RDS → *Automated backups* → *Restore to point in time*, ou a partir de um
-   snapshot, com um **novo** identificador (ex.: `caderneta-sef-db-restore`), a
+   snapshot, com um novo identificador (ex.: `caderneta-sef-db-restore`), a
    mesma VPC, o security group `rds-ec2-1` e *Publicly accessible = No*.
 2. Na EC2, confira o novo endpoint:
    ```sh
@@ -199,8 +199,8 @@ Cada falha vem com o que conferir:
 
 ## Troca de senhas
 
-- **Papéis da aplicação:** `sudo caderneta-database-setup --host <endpoint>` e
+- Papéis da aplicação: `sudo caderneta-database-setup --host <endpoint>` e
   digite `ROTATE`. Gera senhas novas, atualiza o `.env` e o `db-owner.env`, e
   recarrega a aplicação.
-- **Usuário mestre:** console do RDS → *Modify* → *Master password*. Troque-a
+- Usuário mestre: console do RDS → *Modify* → *Master password*. Troque-a
   depois da configuração inicial, principalmente se ela foi compartilhada.

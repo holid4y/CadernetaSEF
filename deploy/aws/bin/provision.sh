@@ -121,7 +121,7 @@ systemctl enable caderneta-queue.service caderneta-scheduler.timer >/dev/null
 echo "==> Commands for the deploy user"
 install -d -m 755 /usr/local/share/caderneta-sef/sql
 install -m 644 "$SOURCE"/../../database/sql/*.sql /usr/local/share/caderneta-sef/sql/
-for script in deploy rollback check-db backup database-setup; do
+for script in deploy rollback check-db backup database-setup mail-setup; do
     install -m 755 "$SOURCE/bin/$script.sh" "/usr/local/bin/caderneta-$script"
 done
 SUDOERS=/etc/sudoers.d/caderneta-deploy

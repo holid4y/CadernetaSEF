@@ -35,7 +35,7 @@ fotografia completa do escopo autorizado; paginação pode ser adicionada ao
 adaptar `store.js` no futuro.
 
 - IDs são números; perfis: `admin`, `team`, `viewer`.
-- Datas são números Unix em **milissegundos**, instantes absolutos. Converta
+- Datas são números Unix em milissegundos, instantes absolutos. Converta
   os campos UTC do banco no serializador. Não envie strings ISO para as telas
   atuais. O app exibe no fuso do aparelho; use America/Sao_Paulo para operação local.
 - `service.documents` é um array de nomes; `appointment.documents` contém
