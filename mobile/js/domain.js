@@ -54,7 +54,7 @@ const log = (state, appointment, type, actor, at, old = null, next = null) => {
 
 export const isBlocking = (appointment) => BLOCKING.includes(appointment.status);
 
-/** Two periods overlap when new_start < existing_end AND new_end > existing_start (RF-026). */
+/** Two periods overlap when new_start < existing_end AND new_end > existing_start. */
 export const findConflict = (state, { responsibleId, start, end, ignoreId = null }) =>
     state.appointments.find(
         (a) =>
@@ -109,11 +109,8 @@ export function scheduleAppointment(state, actor, input, now = Date.now()) {
     const conflict = findConflict(state, { responsibleId: input.responsibleId, start: input.start, end: input.end });
     if (conflict) fail(conflictMessage(state, conflict), 'start');
 
-    if (input.externalKey && (typeof input.externalKey !== 'string' || input.externalKey.length > 1024)) fail('Identificador de calendário inválido.');
-    if (input.externalKey && state.appointments.some(item => item.externalKey === input.externalKey || input.externalKey === `atendimento-${item.id}@agenda-contabil`)) fail('Este evento já foi importado.');
 
     const appointment = {
-        externalKey: input.externalKey ?? null,
         id: nextId(state, 'appointment'),
         clientId: client.id,
         serviceSlug: service.slug,
@@ -208,7 +205,7 @@ export function toggleDocument(state, actor, appointmentId, documentId, now = Da
     return document;
 }
 
-/** Why a reminder cannot go out by e-mail, or null when it can (RF-070). */
+/** Why a reminder cannot go out by e-mail, or null when it can. */
 export const reminderBlocker = (client) => {
     if (!client.active) return 'Este atendido está inativo.';
     if (!client.acceptsReminders) return 'O atendido não autorizou lembretes.';

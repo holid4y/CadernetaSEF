@@ -93,23 +93,14 @@ Respostas autenticadas devem usar `Cache-Control: no-store`. Nenhum segredo ou
 credencial de banco deve ser incluído no app. Não há fila de gravação offline
 em modo servidor: falhas são exibidas e o usuário pode tentar novamente.
 
-## Importação de calendário
-
-`scheduleAppointment` pode receber `input.externalKey` (string, até 1024
-caracteres). É o UID do evento; em recorrências inclui o identificador da
-ocorrência original. O servidor calcula o SHA-256 e grava o valor em
-`appointments.calendar_import_key`, protegido por índice único, e responde `422`
-para evento já importado, inclusive sob concorrência, sem confiar na checagem
-prévia do aparelho. Eventos exportados por esta própria agenda são recusados
-enquanto o atendimento existir. Esse campo não substitui autorização nem
-validação de horário; a regra fica na ação `ScheduleAppointment`.
+## Contatos e calendário
 
 Atalhos `mailto:` e `wa.me` são manuais e não chamam `sendReminder`. O funcionário
 escolhe a conta de e-mail remetente no aplicativo do aparelho. Só a operação de
 envio do servidor pode atualizar `reminder_sent_at`.
 
-Detalhes, limites da importação e requisitos futuros de OAuth:
-[integrações de calendário](../docs/calendar-integrations.md).
+A exportação para o Google Agenda e o arquivo `.ics` são gerados no aparelho, sem
+chamar a API: [integrações de calendário](../docs/calendar-integrations.md).
 
 ## Formulários do parceiro
 

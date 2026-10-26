@@ -109,11 +109,6 @@ mudança de status, quando ela é da mesma pessoa, tem menos de 10 minutos e
 nada mais mudou depois. Se o horário liberado já foi ocupado, recusa com 409. O
 desfazer entra no histórico como uma mudança de status.
 
-`scheduleAppointment` aceita `input.externalKey` (UID do evento importado de
-`.ics`, até 1024 caracteres). O servidor grava o SHA-256 em
-`appointments.calendar_import_key`, com índice único, e recusa eventos que esta
-agenda mesma exportou.
-
 ## Concorrência
 
 - Agendar trava a linha do responsável. Reagendar, mudar status e desfazer

@@ -23,7 +23,7 @@ use Illuminate\Support\Str;
 #[Fillable([
     'client_id', 'service_id', 'service_details', 'responsible_user_id',
     'starts_at', 'ends_at', 'status', 'location_type', 'location', 'notes',
-    'created_by', 'updated_by', 'calendar_import_key',
+    'created_by', 'updated_by',
 ])]
 class Appointment extends Model
 {

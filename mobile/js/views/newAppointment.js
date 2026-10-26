@@ -97,9 +97,12 @@ export default function newAppointment({ query, state, user }) {
             };
 
             root.querySelector('#prev').addEventListener('click', () => {
-                if (draft.creating) draft.creating = false;
-                else if (draft.step > 1) draft.step -= 1;
-                else return back('/agenda');
+                if (draft.creating) {
+                    draft.creating = false;
+                    return show();
+                }
+                if (draft.step <= 1) return back('/agenda');
+                draft.step -= 1;
                 show();
             });
 

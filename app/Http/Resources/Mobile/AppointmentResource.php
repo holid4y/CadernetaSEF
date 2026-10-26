@@ -39,7 +39,6 @@ class AppointmentResource extends JsonResource
             'createdAt' => $this->created_at?->getTimestampMs(),
             'updatedAt' => $this->updated_at?->getTimestampMs(),
             'reminderSentAt' => $this->reminder_sent_at?->getTimestampMs(),
-            'externalKey' => null,
             'documents' => $this->documents->map(fn (AppointmentDocument $document): array => self::document($document))->all(),
             'activities' => $this->activities->sortBy([['created_at', 'asc'], ['id', 'asc']])
                 ->map(fn (AppointmentActivity $activity): array => self::activity($activity))->values()->all(),

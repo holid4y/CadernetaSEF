@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Livewire\Appointments;
 
 use App\Domain\Appointments\Actions\ScheduleAppointment;
-use App\Domain\Appointments\CalendarImportKey;
 use App\Domain\Appointments\Enums\LocationType;
 use App\Domain\Clients\Queries\SearchClients;
 use App\Livewire\Forms\ClientForm;
@@ -22,7 +21,6 @@ use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
-use Livewire\Attributes\On;
 use Livewire\Component;
 
 class CreateAppointment extends Component
@@ -54,9 +52,6 @@ class CreateAppointment extends Component
 
     public string $notes = '';
 
-    #[Locked]
-    public ?string $calendar_import_key = null;
-
     /**
      * @param  ?string  $start  local wall time from the agenda, e.g. 2026-10-05T14:00:00
      */
@@ -73,39 +68,6 @@ class CreateAppointment extends Component
         if ($clientId !== null) {
             $this->selectClient($clientId);
         }
-    }
-
-    #[On('calendar-import')]
-    public function importCalendar(array $draft): void
-    {
-        $this->authorize('create', Appointment::class);
-        $this->resetErrorBag('calendar_import_key');
-        $data = validator($draft, [
-            'key' => ['required', 'string', 'max:1024'],
-            'title' => ['required', 'string', 'max:255'],
-            'start' => ['required', 'date_format:Y-m-d\TH:i:s', 'after_or_equal:-1 year', 'before_or_equal:+2 years'],
-            'end' => ['required', 'date_format:Y-m-d\TH:i:s', 'after:start'],
-            'description' => ['nullable', 'string', 'max:2000'],
-            'location' => ['nullable', 'string', 'max:255'],
-        ])->validate();
-        $importKey = CalendarImportKey::for($data['key']);
-        if (Appointment::withTrashed()->where('calendar_import_key', $importKey)->exists()) {
-            $this->addError('calendar_import_key', __('appointments.errors.already_imported'));
-
-            return;
-        }
-        if (substr($data['end'], 0, 10) !== substr($data['start'], 0, 10)) {
-            $this->addError('calendar_import_key', 'Eventos que atravessam a meia-noite devem ser cadastrados manualmente.');
-
-            return;
-        }
-        $this->calendar_import_key = $importKey;
-        $this->date = substr($data['start'], 0, 10);
-        $this->start_time = substr($data['start'], 11, 5);
-        $this->end_time = substr($data['end'], 11, 5);
-        $this->location = $data['location'] ?? '';
-        $this->notes = mb_substr(implode("\n", array_filter([$data['title'], $data['description'] ?? ''])), 0, 2000);
-        $this->service_details = $data['title'];
     }
 
     #[Computed]
@@ -189,7 +151,7 @@ class CreateAppointment extends Component
     {
         $this->resetErrorBag(['service_id', 'service_details']);
 
-        if ($this->calendar_import_key !== null || $this->service === null || ! $this->isTime($this->start_time)) {
+        if ($this->service === null || ! $this->isTime($this->start_time)) {
             return;
         }
 
@@ -228,7 +190,6 @@ class CreateAppointment extends Component
         ]);
 
         $appointment = $schedule->handle(Auth::user(), [
-            'calendar_import_key' => $this->calendar_import_key,
             'client_id' => $this->client_id,
             'service_id' => $this->service_id,
             'responsible_user_id' => $this->responsible_user_id,

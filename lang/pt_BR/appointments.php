@@ -47,8 +47,6 @@ return [
         'undo_unavailable' => 'Não é mais possível desfazer: o atendimento mudou depois disso. Atualize os dados.',
         'stale' => 'Este atendimento foi alterado por outra pessoa. Atualize os dados e tente de novo.',
         'slot_taken' => 'Este horário acabou de ser ocupado. Atualize os dados e escolha outro horário.',
-        'already_imported' => 'Este evento já foi importado.',
-        'own_export' => 'Este atendimento já está na agenda.',
     ],
 
     'flash' => [

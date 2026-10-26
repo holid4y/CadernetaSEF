@@ -16,7 +16,7 @@ document.addEventListener('livewire:navigating', () => {
 });
 
 document.addEventListener('livewire:navigated', async () => {
-    mountCalendarTools(Livewire);
+    mountCalendarTools();
     const element = document.querySelector('[data-agenda]');
 
     if (element === null) {

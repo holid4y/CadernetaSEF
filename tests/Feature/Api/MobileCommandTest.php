@@ -154,18 +154,6 @@ class MobileCommandTest extends TestCase
         $this->assertDatabaseCount('appointments', 1);
     }
 
-    public function test_an_imported_event_is_accepted_only_once(): void
-    {
-        $input = [...$this->bookingInput('2026-10-06 13:00', '2026-10-06 14:00'), 'externalKey' => 'evento-123@google.com'];
-
-        $this->command('scheduleAppointment', [$input])->assertOk();
-        $this->command('scheduleAppointment', [[...$input, 'start' => $this->ms('2026-10-07 13:00'), 'end' => $this->ms('2026-10-07 14:00')]])
-            ->assertUnprocessable()
-            ->assertJsonPath('errors.externalKey.0', 'Este evento já foi importado.');
-
-        $this->assertSame(hash('sha256', 'evento-123@google.com'), Appointment::query()->sole()->calendar_import_key);
-    }
-
     public function test_an_inactive_service_can_not_be_booked(): void
     {
         Service::factory()->inactive()->create(['slug' => 'antigo']);

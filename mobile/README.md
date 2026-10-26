@@ -56,12 +56,8 @@ contatos. O e-mail abre no aplicativo do funcionário; ele escolhe a conta e
 confirma o envio. Lembretes exigem consentimento e perfil com escrita.
 
 Nos detalhes do atendimento, use “Google Agenda” para criar uma cópia ou exporte
-um `.ics`. Na agenda, “Importar de outra agenda” permite selecionar um arquivo
-`.ics`, revisar o evento e escolher atendido, serviço e responsável. Duplicados
-e conflitos são recusados. A cópia não é sincronizada automaticamente.
-
-O Google exporta arquivos pelo site no computador, não pelo app. A leitura direta
-da conta exige OAuth e o servidor. Veja os [detalhes e limites](../docs/calendar-integrations.md).
+um `.ics`. A cópia não é sincronizada automaticamente. Veja os
+[detalhes e limites](../docs/calendar-integrations.md).
 
 ## Formulários vinculados
 

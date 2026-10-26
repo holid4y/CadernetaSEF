@@ -10,7 +10,6 @@ use App\Domain\Appointments\Actions\RescheduleAppointment;
 use App\Domain\Appointments\Actions\ScheduleAppointment;
 use App\Domain\Appointments\Actions\SendAppointmentReminder;
 use App\Domain\Appointments\Actions\UndoStatusChange;
-use App\Domain\Appointments\CalendarImportKey;
 use App\Domain\Appointments\Enums\AppointmentStatus;
 use App\Domain\Appointments\Enums\LocationType;
 use App\Domain\Clients\Actions\SaveClient;
@@ -53,7 +52,6 @@ class MobileCommandController extends Controller
         'starts_at' => 'start',
         'ends_at' => 'end',
         'location_type' => 'locationType',
-        'calendar_import_key' => 'externalKey',
         'trade_name' => 'tradeName',
         'accepts_reminders' => 'acceptsReminders',
     ];
@@ -149,7 +147,6 @@ class MobileCommandController extends Controller
             'input.locationType' => ['nullable', Rule::enum(LocationType::class)],
             'input.location' => ['nullable', 'string', 'max:255'],
             'input.notes' => ['nullable', 'string', 'max:2000'],
-            'input.externalKey' => ['nullable', 'string', 'max:1024'],
         ])['input'];
 
         $appointment = $this->schedule->handle($user, [
@@ -162,7 +159,6 @@ class MobileCommandController extends Controller
             'location_type' => $input['locationType'] ?? LocationType::OnCampus->value,
             'location' => $input['location'] ?? null,
             'notes' => $input['notes'] ?? null,
-            'calendar_import_key' => isset($input['externalKey']) ? CalendarImportKey::for($input['externalKey']) : null,
         ]);
 
         return self::appointment($appointment);

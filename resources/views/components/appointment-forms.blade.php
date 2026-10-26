@@ -22,7 +22,8 @@
                     <p class="mt-1 text-sm text-ink-muted">{{ $form->statusLabel() }}</p>
                     @if ($openUrl)
                         <a href="{{ $openUrl }}" target="_blank" rel="noopener noreferrer" class="press mt-2 inline-flex min-h-11 items-center rounded-full border border-line px-4 text-sm font-semibold text-primary">Abrir formulário</a>
-                    @elseif ($form->status !== 'deleted')
+                    @endif
+                    @if (! $openUrl && $form->status !== 'deleted')
                         <p class="mt-2 text-sm text-ink-muted">Link indisponível. Confira a configuração da integração.</p>
                     @endif
                 </li>
