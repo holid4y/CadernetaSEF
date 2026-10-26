@@ -51,12 +51,19 @@ final class RescheduleAppointment
                 'responsible_user_id' => $appointment->responsible_user_id,
             ];
 
-            $appointment->update([
+            $appointment->fill([
                 'starts_at' => $startsAt,
                 'ends_at' => $endsAt,
                 'responsible_user_id' => $responsible->id,
                 'updated_by' => $author->id,
             ]);
+
+            // A reminder already sent carries the old time; the next run sends the new one.
+            if ($movesPeriod) {
+                $appointment->reminder_sent_at = null;
+            }
+
+            $appointment->save();
 
             if ($movesPeriod) {
                 $appointment->recordActivity(
