@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Resources\Mobile;
 
 use App\Models\Client;
+use App\Rules\BrazilianDocument;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -24,7 +25,7 @@ class ClientResource extends JsonResource
             'type' => $this->type->value,
             'name' => $this->name,
             'tradeName' => $this->trade_name,
-            'document' => $sensitive && $this->document ? preg_replace('/\D/', '', $this->document) : null,
+            'document' => $sensitive && $this->document ? BrazilianDocument::characters($this->document) : null,
             'phone' => $this->phone,
             'email' => $this->email,
             'notes' => $sensitive ? $this->notes : null,

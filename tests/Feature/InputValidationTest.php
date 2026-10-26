@@ -32,15 +32,19 @@ class InputValidationTest extends TestCase
             'repeated digits' => ['111.111.111-11', false],
             'valid CNPJ' => ['11.222.333/0001-81', true],
             'CNPJ with a wrong check digit' => ['11.222.333/0001-82', false],
+            'CNPJ with letters' => ['12.ABC.345/01DE-35', true],
+            'CNPJ with letters typed in lower case' => ['12abc34501de35', true],
+            'CNPJ with letters and a wrong check digit' => ['12.ABC.345/01DE-36', false],
+            'letters where a check digit belongs' => ['12.ABC.345/01DE-3A', false],
         ];
     }
 
     #[DataProvider('documents')]
     public function test_document_check_digits(string $document, bool $valid): void
     {
-        $digits = preg_replace('/\D/', '', $document);
+        $characters = BrazilianDocument::characters($document);
 
-        $this->assertSame($valid, strlen($digits) === 11 ? BrazilianDocument::isCpf($digits) : BrazilianDocument::isCnpj($digits));
+        $this->assertSame($valid, strlen($characters) === 11 ? BrazilianDocument::isCpf($characters) : BrazilianDocument::isCnpj($characters));
     }
 
     public function test_the_document_must_match_the_client_type(): void

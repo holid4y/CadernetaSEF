@@ -2,7 +2,7 @@
     <div class="mx-auto max-w-5xl space-y-6 px-4 py-10 sm:px-6 lg:px-8">
         <x-flash-status />
 
-        <x-page-header :title="$client->name" :subtitle="collect([$client->type->label(), $client->trade_name, $client->document])->filter()->implode(' · ')">
+        <x-page-header :title="$client->name" :subtitle="collect([$client->type->label(), $client->trade_name, auth()->user()->canWrite() ? $client->document : null])->filter()->implode(' · ')">
             <x-slot name="actions">
                 @can('create', App\Models\Appointment::class)
                     @if ($client->active)
@@ -26,7 +26,7 @@
                         <div><dt class="text-ink-muted">{{ __('clients.fields.email') }}</dt><dd class="break-all text-ink">{{ $client->email }}</dd></div>
                     @endif
                     <div><dd class="text-ink-muted">{{ $client->accepts_reminders ? __('clients.show.reminders_on') : __('clients.show.reminders_off') }}</dd></div>
-                    @if ($client->notes)
+                    @if ($client->notes && auth()->user()->canWrite())
                         <div><dt class="text-ink-muted">{{ __('clients.fields.notes') }}</dt><dd class="whitespace-pre-line text-ink">{{ $client->notes }}</dd></div>
                     @endif
                 </dl>

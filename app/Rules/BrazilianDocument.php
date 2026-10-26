@@ -17,11 +17,9 @@ final class BrazilianDocument implements ValidationRule
 
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        $digits = preg_replace('/\D/', '', (string) $value);
-
         $valid = match ($this->type) {
-            ClientType::Individual => self::isCpf($digits),
-            ClientType::Organization => self::isCnpj($digits),
+            ClientType::Individual => self::isCpf(preg_replace('/\D/', '', (string) $value)),
+            ClientType::Organization => self::isCnpj(self::characters((string) $value)),
         };
 
         if (! $valid) {
@@ -39,16 +37,24 @@ final class BrazilianDocument implements ValidationRule
             && self::checkDigits($digits, 10, fn (int $position, int $length): int => $length + 1 - $position);
     }
 
-    public static function isCnpj(string $digits): bool
+    // Since July 2026 the Receita also issues CNPJs with letters in the first
+    // twelve places; the two check digits stay numeric.
+    public static function isCnpj(string $cnpj): bool
     {
-        if (strlen($digits) !== 14 || preg_match('/^(\d)\1{13}$/', $digits)) {
+        if (! preg_match('/^[0-9A-Z]{12}\d{2}$/', $cnpj) || preg_match('/^(.)\1{13}$/', $cnpj)) {
             return false;
         }
 
         // Weights run 5..2 then 9..2 for the first digit, 6..2 then 9..2 for the second.
         $weight = fn (int $position, int $length): int => (($length - 1 - $position) % 8) + 2;
 
-        return self::checkDigits($digits, 12, $weight) && self::checkDigits($digits, 13, $weight);
+        return self::checkDigits($cnpj, 12, $weight) && self::checkDigits($cnpj, 13, $weight);
+    }
+
+    // Letters and digits only, in upper case: how a document is compared and indexed.
+    public static function characters(string $document): string
+    {
+        return strtoupper(preg_replace('/[^0-9A-Za-z]/', '', $document));
     }
 
     /**
@@ -59,7 +65,8 @@ final class BrazilianDocument implements ValidationRule
         $sum = 0;
 
         for ($position = 0; $position < $length; $position++) {
-            $sum += (int) $digits[$position] * $weight($position, $length);
+            // A letter is worth its ASCII code minus 48, which keeps every digit at its own value.
+            $sum += (ord($digits[$position]) - 48) * $weight($position, $length);
         }
 
         $expected = $sum % 11 < 2 ? 0 : 11 - $sum % 11;

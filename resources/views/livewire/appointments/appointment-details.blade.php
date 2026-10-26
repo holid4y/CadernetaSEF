@@ -107,7 +107,8 @@
                                 <dd class="mt-1 whitespace-pre-line text-ink">{{ $appointment->service_details }}</dd>
                             </div>
                         @endif
-                        @if ($appointment->notes)
+                        {{-- Viewers do not get CPF/CNPJ or notes, on the web or in the app. --}}
+                        @if ($appointment->notes && auth()->user()->canWrite())
                             <div class="sm:col-span-2">
                                 <dt class="text-sm text-ink-muted">{{ __('appointments.show.notes') }}</dt>
                                 <dd class="mt-1 whitespace-pre-line text-ink">{{ $appointment->notes }}</dd>

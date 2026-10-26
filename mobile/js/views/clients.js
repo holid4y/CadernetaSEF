@@ -190,7 +190,7 @@ export function clientFormBody(client = null, { compact = false } = {}) {
                 ? ''
                 : `<div class="field">
             <label for="document" id="doc-label">${type === 'organization' ? 'CNPJ' : 'CPF'} <span class="opt">(opcional)</span></label>
-            <input class="input" id="document" name="document" inputmode="numeric" autocomplete="off" value="${esc(client?.document ? formatDocument(client.document) : '')}">
+            <input class="input" id="document" name="document" inputmode="${type === 'organization' ? 'text' : 'numeric'}" autocapitalize="characters" autocomplete="off" value="${esc(client?.document ? formatDocument(client.document) : '')}">
             <span class="field-error" data-error="document" hidden></span>
         </div>
         <div class="field">
@@ -219,7 +219,10 @@ export function mountClientForm(root, client, onSaved) {
         root.querySelector('#trade-field').hidden = !org;
         const docLabel = root.querySelector('#doc-label');
         if (docLabel) docLabel.innerHTML = `${org ? 'CNPJ' : 'CPF'} <span class="opt">(opcional)</span>`;
-        if (form.document) form.document.value = maskDocument(form.document.value, type);
+        if (form.document) {
+            form.document.inputMode = org ? 'text' : 'numeric';
+            form.document.value = maskDocument(form.document.value, type);
+        }
     };
 
     root.querySelectorAll('[data-client-type]').forEach((button) =>

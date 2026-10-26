@@ -130,7 +130,11 @@ export const formatPhone = (value) => {
 
 export const dialNumber = phoneNumber;
 
-const allSame = (d) => /^(\d)\1+$/.test(d);
+const allSame = (d) => /^(.)\1+$/.test(d);
+
+// Letters and digits in upper case. Since July 2026 a CNPJ may carry letters
+// in its first twelve places; the two check digits stay numeric.
+export const documentChars = (s) => String(s ?? '').toUpperCase().replace(/[^0-9A-Z]/g, '');
 
 export const isValidCpf = (value) => {
     const d = digits(value);
@@ -145,11 +149,12 @@ export const isValidCpf = (value) => {
 };
 
 export const isValidCnpj = (value) => {
-    const d = digits(value);
-    if (d.length !== 14 || allSame(d)) return false;
+    const d = documentChars(value);
+    if (!/^[0-9A-Z]{12}\d{2}$/.test(d) || allSame(d)) return false;
     const check = (len) => {
         const weights = len === 12 ? [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2] : [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
-        const sum = weights.reduce((acc, w, i) => acc + w * Number(d[i]), 0);
+        // A letter is worth its character code minus 48, so digits keep their value.
+        const sum = weights.reduce((acc, w, i) => acc + w * (d.charCodeAt(i) - 48), 0);
         const rest = sum % 11;
         return rest < 2 ? 0 : 11 - rest;
     };
@@ -159,20 +164,22 @@ export const isValidCnpj = (value) => {
 export const formatDocument = (value) => {
     const d = digits(value);
     if (d.length === 11) return d.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-    if (d.length === 14) return d.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+    const c = documentChars(value);
+    if (c.length === 14) return c.replace(/(\w{2})(\w{3})(\w{3})(\w{4})(\d{2})/, '$1.$2.$3/$4-$5');
     return value ?? '';
 };
 
 export const maskDocument = (value, type) => {
-    const d = digits(value).slice(0, type === 'organization' ? 14 : 11);
     if (type === 'organization') {
-        return d
-            .replace(/^(\d{2})(\d)/, '$1.$2')
-            .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
-            .replace(/\.(\d{3})(\d)/, '.$1/$2')
-            .replace(/(\d{4})(\d)/, '$1-$2');
+        return documentChars(value)
+            .slice(0, 14)
+            .replace(/^(\w{2})(\w)/, '$1.$2')
+            .replace(/^(\w{2})\.(\w{3})(\w)/, '$1.$2.$3')
+            .replace(/\.(\w{3})(\w)/, '.$1/$2')
+            .replace(/\/(\w{4})(\w)/, '/$1-$2');
     }
-    return d
+    return digits(value)
+        .slice(0, 11)
         .replace(/^(\d{3})(\d)/, '$1.$2')
         .replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3')
         .replace(/\.(\d{3})(\d)/, '.$1-$2');

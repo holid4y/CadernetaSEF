@@ -93,9 +93,8 @@ A EC2 ainda não tem a aplicação instalada.
   paginação.
 - `APP_KEY`. Perdê-la torna ilegíveis CPF/CNPJ, observações e links; o índice
   de busca por documento depende dela.
-- Diferença de exposição. Na web, o visualizador vê CPF/CNPJ e observações
-  na ficha do atendido. No app, não recebe esses dados. Alinhar a web ao app
-  reduziria a exposição, mas muda uma tela existente: é decisão do projeto.
+- Visualizador. Nem a web nem o app mostram a ele CPF/CNPJ ou observações de
+  atendidos e atendimentos.
 - LGPD. Há medidas técnicas, sem afirmação de conformidade (que depende de
   avaliação jurídica e da universidade):
   - consentimento datado;

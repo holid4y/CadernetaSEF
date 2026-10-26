@@ -92,7 +92,7 @@
             </div>
         @endif
 
-        @if ($appointment->notes)
+        @if ($appointment->notes && auth()->user()->canWrite())
             <p class="whitespace-pre-line text-ink-muted">{{ $appointment->notes }}</p>
         @endif
 
