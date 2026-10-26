@@ -84,8 +84,8 @@ Na EC2, com o domínio já apontando para ela:
 
 ```sh
 sudo apt-get update && sudo apt-get install -y git
-git clone https://github.com/holid4y/Agenda-Contabil.git ~/Agenda-Contabil
-cd ~/Agenda-Contabil
+git clone https://github.com/holid4y/CadernetaSEF.git ~/CadernetaSEF
+cd ~/CadernetaSEF
 sudo deploy/aws/bin/provision.sh agenda.exemplo.org
 ```
 

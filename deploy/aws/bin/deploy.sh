@@ -12,7 +12,7 @@
 set -euo pipefail
 
 APP_DIR=/var/www/caderneta-sef
-REPOSITORY=${CADERNETA_REPOSITORY:-https://github.com/holid4y/Agenda-Contabil.git}
+REPOSITORY=${CADERNETA_REPOSITORY:-https://github.com/holid4y/CadernetaSEF.git}
 ENV_FILE=$APP_DIR/shared/.env
 OWNER_FILE=$APP_DIR/shared/db-owner.env
 KEEP_RELEASES=5
