@@ -2,7 +2,7 @@
     <div class="flex flex-wrap gap-4">
         @foreach (App\Domain\Clients\Enums\ClientType::cases() as $type)
             <label class="inline-flex min-h-11 items-center gap-2 text-sm">
-                <input type="radio" wire:model.live="new_client.type" value="{{ $type->value }}" class="size-5 border-line bg-surface text-primary focus:ring-primary">
+                <x-radio-input wire:model.live="new_client.type" value="{{ $type->value }}" />
                 {{ $type->label() }}
             </label>
         @endforeach

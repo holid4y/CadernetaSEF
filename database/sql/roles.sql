@@ -47,6 +47,13 @@ ALTER ROLE agenda_owner NOCREATEDB NOCREATEROLE CONNECTION LIMIT 5;
 ALTER ROLE agenda_app NOCREATEDB NOCREATEROLE CONNECTION LIMIT 40;
 ALTER ROLE agenda_reports NOCREATEDB NOCREATEROLE CONNECTION LIMIT 5;
 
+-- A runaway query or a transaction left open by a crashed worker would
+-- otherwise hold locks and connections until someone notices.
+ALTER ROLE agenda_app SET statement_timeout = '30s';
+ALTER ROLE agenda_app SET idle_in_transaction_session_timeout = '1min';
+ALTER ROLE agenda_reports SET statement_timeout = '1min';
+ALTER ROLE agenda_reports SET idle_in_transaction_session_timeout = '1min';
+
 SELECT format('ALTER ROLE agenda_owner PASSWORD %L', :'owner_password') \gexec
 SELECT format('ALTER ROLE agenda_app PASSWORD %L', :'app_password') \gexec
 SELECT format('ALTER ROLE agenda_reports PASSWORD %L', :'reports_password') \gexec

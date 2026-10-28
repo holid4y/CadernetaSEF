@@ -7,6 +7,7 @@ namespace App\Livewire\Services;
 use App\Domain\Services\Actions\SaveService;
 use App\Models\Service;
 use App\Models\ServiceCategory;
+use Closure;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\View\View;
 use Livewire\Attributes\Computed;
@@ -117,7 +118,7 @@ class ServiceCatalog extends Component
 
         $this->validate([
             'service_category_id' => ['required', 'integer', 'exists:service_categories,id'],
-            'name' => ['required', 'string', 'max:120'],
+            'name' => ['required', 'string', 'max:120', $this->nameIsFree(...)],
             'description' => ['nullable', 'string', 'max:1000'],
             'default_duration_minutes' => ['required', 'integer', 'min:15', 'max:480'],
             'requires_details' => ['boolean'],
@@ -143,6 +144,21 @@ class ServiceCatalog extends Component
     public function render(): View
     {
         return view('livewire.services.service-catalog');
+    }
+
+    // The booking form lists services by name under their category, where two
+    // equal names could not be told apart.
+    private function nameIsFree(string $attribute, mixed $value, Closure $fail): void
+    {
+        $taken = Service::query()
+            ->where('service_category_id', $this->service_category_id)
+            ->whereRaw('lower(name) = ?', [mb_strtolower(trim((string) $value))])
+            ->when($this->service_id, fn ($query, int $id) => $query->whereKeyNot($id))
+            ->exists();
+
+        if ($taken) {
+            $fail(__('services.errors.name_taken'));
+        }
     }
 
     private function resetForm(): void

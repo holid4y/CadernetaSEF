@@ -151,6 +151,31 @@ class AppointmentReminderTest extends TestCase
         $this->assertSame(AppointmentStatus::Cancelled, $appointment->fresh()->status);
     }
 
+    public function test_the_link_no_longer_changes_an_appointment_the_team_has_opened(): void
+    {
+        $appointment = $this->appointmentAt('2026-10-06 10:00');
+        $url = ReminderMessage::responseUrl($appointment);
+        $appointment->update(['status' => AppointmentStatus::InProgress]);
+
+        $this->get($url)->assertDontSee('Não poderei ir');
+        $this->post($url, ['answer' => 'cancel'])
+            ->assertSessionHas('notice', 'Este atendimento não pode mais ser alterado por aqui.');
+
+        $this->assertSame(AppointmentStatus::InProgress, $appointment->fresh()->status);
+    }
+
+    public function test_an_older_link_stops_working_once_a_moved_appointment_starts(): void
+    {
+        $appointment = $this->appointmentAt('2026-10-06 18:00');
+        $url = ReminderMessage::responseUrl($appointment);
+        $appointment->update(['starts_at' => '2026-10-06 10:00', 'ends_at' => '2026-10-06 11:00']);
+
+        $this->travelTo('2026-10-06 10:30');
+        $this->post($url, ['answer' => 'cancel']);
+
+        $this->assertSame(AppointmentStatus::Scheduled, $appointment->fresh()->status);
+    }
+
     public function test_the_team_can_send_it_again_by_hand(): void
     {
         $this->actingAs(User::factory()->create());

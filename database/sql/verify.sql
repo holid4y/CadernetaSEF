@@ -28,7 +28,8 @@ BEGIN
             ('agenda_app', 'clients', 'DELETE', false),
             ('agenda_app', 'users', 'UPDATE', true),
             ('agenda_app', 'users', 'DELETE', false),
-            ('agenda_app', 'data_audits', 'INSERT', true),
+            ('agenda_app', 'data_audits', 'INSERT', false),
+            ('agenda_app', 'data_audits', 'SELECT', false),
             ('agenda_app', 'data_audits', 'UPDATE', false),
             ('agenda_app', 'data_audits', 'DELETE', false),
             ('agenda_app', 'form_webhook_events', 'INSERT', true),
@@ -88,6 +89,16 @@ BEGIN
             'appointments_keep_rows', 'appointment_activities_append_only', 'appointment_activities_no_truncate',
             'data_audits_append_only', 'data_audits_no_truncate', 'clients_audit', 'users_audit')) <> 7 THEN
         problems := array_append(problems, 'one of the history, audit or keep-rows triggers is missing or disabled');
+    END IF;
+
+    IF NOT coalesce((SELECT prosecdef FROM pg_proc WHERE proname = 'audit_row_change'), false) THEN
+        problems := array_append(problems, 'audit_row_change must write as its owner (SECURITY DEFINER)');
+    END IF;
+
+    IF NOT EXISTS (SELECT FROM pg_db_role_setting s JOIN pg_roles r ON r.oid = s.setrole
+                   WHERE r.rolname = 'agenda_app' AND s.setdatabase = 0
+                   AND s.setconfig @> ARRAY['idle_in_transaction_session_timeout=1min']) THEN
+        problems := array_append(problems, 'agenda_app has no idle_in_transaction_session_timeout (run roles.sql)');
     END IF;
 
     IF NOT coalesce((SELECT ssl FROM pg_stat_ssl WHERE pid = pg_backend_pid()), false) THEN

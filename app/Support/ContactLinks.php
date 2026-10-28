@@ -41,7 +41,25 @@ final class ContactLinks
             return null;
         }
 
-        return 'mailto:'.rawurlencode($email).'?subject='.rawurlencode($subject).'&body='.rawurlencode($body);
+        // Some mail programs read an encoded @ literally, so it stays as it is.
+        return 'mailto:'.str_replace('%40', '@', rawurlencode($email)).'?subject='.rawurlencode($subject).'&body='.rawurlencode($body);
+    }
+
+    // A mailto link does nothing on a computer without a mail program, which
+    // is common for people who only use Gmail in the browser.
+    public static function gmail(?string $value, string $subject = '', string $body = ''): ?string
+    {
+        if (self::email($value) === null) {
+            return null;
+        }
+
+        return 'https://mail.google.com/mail/?'.http_build_query([
+            'view' => 'cm',
+            'fs' => 1,
+            'to' => trim($value),
+            'su' => $subject,
+            'body' => $body,
+        ], '', '&', PHP_QUERY_RFC3986);
     }
 
     public static function whatsapp(?string $value, string $body = ''): ?string

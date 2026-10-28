@@ -1,6 +1,6 @@
 @php
-    $canConfirm = $appointment->status->canTransitionTo(App\Domain\Appointments\Enums\AppointmentStatus::Confirmed);
-    $canCancel = $appointment->status->canTransitionTo(App\Domain\Appointments\Enums\AppointmentStatus::Cancelled);
+    $canConfirm = in_array(App\Domain\Appointments\Enums\AppointmentStatus::Confirmed, $answers, true);
+    $canCancel = in_array(App\Domain\Appointments\Enums\AppointmentStatus::Cancelled, $answers, true);
 @endphp
 
 <x-public-layout>

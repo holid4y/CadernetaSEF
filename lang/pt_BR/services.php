@@ -35,6 +35,7 @@ return [
     'errors' => [
         'too_many_documents' => 'Uma lista pode ter no máximo :max documentos.',
         'stale' => 'A lista de documentos mudou. Atualize os dados e tente de novo.',
+        'name_taken' => 'Já existe um serviço com esse nome nesta categoria.',
     ],
 
     'flash' => [
