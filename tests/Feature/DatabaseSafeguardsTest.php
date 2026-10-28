@@ -47,6 +47,7 @@ class DatabaseSafeguardsTest extends TestCase
 
         $this->assertSame(['document', 'document_index', 'email'], json_decode($audit->changed_columns));
         $this->assertSame(42, $audit->app_user_id);
+        $this->assertSame(DB::selectOne('SELECT session_user AS name')->name, $audit->db_user);
         $this->assertStringNotContainsString('novo@example.com', json_encode($audit));
     }
 

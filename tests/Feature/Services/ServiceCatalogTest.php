@@ -128,6 +128,27 @@ class ServiceCatalogTest extends TestCase
         $this->assertSame(['consultoria', 'consultoria-2'], Service::query()->orderBy('id')->pluck('slug')->all());
     }
 
+    public function test_a_category_does_not_get_two_services_with_the_same_name(): void
+    {
+        $this->actingAs(User::factory()->admin()->create());
+        $existing = Service::factory()->create(['name' => 'Consultoria']);
+
+        Livewire::test(ServiceCatalog::class)
+            ->call('create')
+            ->set('service_category_id', $existing->service_category_id)
+            ->set('name', ' consultoria ')
+            ->call('save')
+            ->assertHasErrors(['name']);
+
+        Livewire::test(ServiceCatalog::class)
+            ->call('edit', $existing->id)
+            ->set('description', 'Atualizada')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertSame(1, Service::query()->count());
+    }
+
     public function test_a_checklist_over_the_limit_says_so_on_the_page(): void
     {
         $this->actingAs(User::factory()->admin()->create());

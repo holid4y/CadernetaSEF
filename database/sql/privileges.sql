@@ -27,7 +27,10 @@ GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO agenda_app;
 -- and the catalog are deactivated, cancelled or soft deleted, never removed.
 -- The triggers enforce the same rules even for the owner; the grants make
 -- the attempt fail earlier.
-REVOKE UPDATE, DELETE, TRUNCATE ON appointment_activities, data_audits, form_webhook_events FROM agenda_app;
+REVOKE UPDATE, DELETE, TRUNCATE ON appointment_activities, form_webhook_events FROM agenda_app;
+-- The audit trigger writes as the owner, so the application has no use for
+-- the audit table and can not add rows to it either.
+REVOKE ALL ON data_audits FROM agenda_app;
 REVOKE DELETE, TRUNCATE ON clients, appointments, appointment_documents, users, services, service_categories, external_forms FROM agenda_app;
 REVOKE ALL ON migrations FROM agenda_app;
 GRANT SELECT ON migrations TO agenda_app;

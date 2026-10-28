@@ -37,7 +37,7 @@ test('email links encode message content and reject malformed addresses and head
     ])
         assert.equal(emailLink(invalid), null);
     const link = emailLink('ana@example.com', 'Olá & teste', 'Linha 1\nLinha 2');
-    assert.ok(link.startsWith('mailto:ana%40example.com?'));
+    assert.ok(link.startsWith('mailto:ana@example.com?'));
     assert.equal(new URLSearchParams(link.split('?')[1]).get('body'), 'Linha 1\nLinha 2');
 });
 

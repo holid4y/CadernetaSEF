@@ -1,0 +1,1 @@
+<input type="radio" {{ $attributes->merge(['class' => 'size-5 border-line bg-surface text-primary checked:border-primary checked:bg-primary focus:ring-0 focus-visible:ring-2 focus-visible:ring-primary']) }}>

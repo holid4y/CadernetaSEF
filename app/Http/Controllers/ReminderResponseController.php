@@ -24,6 +24,7 @@ class ReminderResponseController extends Controller
             'appointment' => $appointment,
             'start' => DisplayTimezone::toLocal($appointment->starts_at),
             'end' => DisplayTimezone::toLocal($appointment->ends_at),
+            'answers' => self::answers($appointment),
         ]);
     }
 
@@ -35,12 +36,33 @@ class ReminderResponseController extends Controller
 
         $next = $answer === 'confirm' ? AppointmentStatus::Confirmed : AppointmentStatus::Cancelled;
 
-        if (! $appointment->status->canTransitionTo($next)) {
+        if (! in_array($next, self::answers($appointment), true)) {
             return redirect()->to($request->fullUrl())->with('notice', __('reminders.page.unchanged'));
         }
 
         $change->handle(null, $appointment, $next);
 
         return redirect()->to($request->fullUrl())->with('notice', __("reminders.page.done_{$answer}"));
+    }
+
+    /**
+     * A link from an older reminder outlives a move to an earlier time, and
+     * the team may open the appointment before it starts. From then on only
+     * the team changes it.
+     *
+     * @return list<AppointmentStatus>
+     */
+    private static function answers(Appointment $appointment): array
+    {
+        $open = in_array($appointment->status, [AppointmentStatus::Scheduled, AppointmentStatus::Confirmed], true);
+
+        if (! $open || ! $appointment->starts_at->isFuture()) {
+            return [];
+        }
+
+        return array_values(array_filter(
+            [AppointmentStatus::Confirmed, AppointmentStatus::Cancelled],
+            fn (AppointmentStatus $next): bool => $appointment->status->canTransitionTo($next),
+        ));
     }
 }

@@ -31,7 +31,7 @@ export function emailAddress(value) {
 export function emailLink(value, subject = '', body = '') {
     const email = emailAddress(value);
     return email
-        ? `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+        ? `mailto:${encodeURIComponent(email).replace('%40', '@')}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
         : null;
 }
 

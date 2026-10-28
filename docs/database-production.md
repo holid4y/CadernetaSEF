@@ -23,13 +23,14 @@ O endpoint fica apenas no `.env` do servidor, nunca no Git.
 | --- | --- | --- |
 | `postgres` (mestre do RDS) | `roles.sql`, criar bancos de restauração | criar papéis; não é superusuário |
 | `agenda_owner` | dono das tabelas; migrations; backups | DDL; mesmo assim é barrado pelos triggers de histórico |
-| `agenda_app` | a aplicação (`DB_USERNAME`) | ler e gravar dados; não cria tabelas, não apaga atendimentos, atendidos, usuários, serviços nem documentos, não altera histórico, auditoria ou recibos de webhook |
+| `agenda_app` | a aplicação (`DB_USERNAME`) | ler e gravar dados; não cria tabelas, não apaga atendimentos, atendidos, usuários, serviços nem documentos, não altera histórico ou recibos de webhook e não lê nem escreve na auditoria, que só o trigger preenche |
 | `agenda_reports` | ferramentas de relatório | só `SELECT` na view `appointment_facts`, sem nome, contato, documento ou observações |
 
 Arquivos em [`database/sql/`](../database/sql):
 
-- `roles.sql`, rodado pelo mestre: cria ou troca a senha dos três papéis e
-  transfere o banco para `agenda_owner`. As senhas são lidas de variáveis de
+- `roles.sql`, rodado pelo mestre: cria ou troca a senha dos três papéis,
+  limita consultas da aplicação a 30 segundos e transações paradas a 1 minuto,
+  e transfere o banco para `agenda_owner`. As senhas são lidas de variáveis de
   ambiente, então não aparecem no histórico do shell nem na lista de processos;
 - `privileges.sql`, rodado pelo dono depois de toda migration: concede o
   mínimo e define os privilégios padrão das tabelas futuras;
