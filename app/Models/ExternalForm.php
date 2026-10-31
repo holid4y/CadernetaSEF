@@ -23,6 +23,11 @@ class ExternalForm extends Model
         return $this->belongsTo(Appointment::class);
     }
 
+    public function actionLabel(): string
+    {
+        return $this->status === 'completed' ? 'Ver formulário feito' : 'Preencher formulário';
+    }
+
     public function statusLabel(): string
     {
         return match ($this->status) {

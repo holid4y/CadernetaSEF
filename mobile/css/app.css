@@ -1176,3 +1176,22 @@ svg { display: block; flex-shrink: 0; }
 
 @keyframes tab-in { from { transform: translateY(3px) scale(0.88); } }
 @keyframes chart-in { from { transform: scaleY(0.15); opacity: 0; } }
+
+/* Google Agenda: the colour "G" stays on white, as Google's button rules ask. */
+.g-mark { display: inline-flex; flex: none; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; background: #fff; vertical-align: -3px; }
+.g-mark svg { width: 18px; height: 18px; }
+.menu-item .g-mark svg { width: 18px; height: 18px; }
+.google-btn { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 14px 0 12px; border: 1px solid #747775; border-radius: 999px; background: #fff; color: #1f1f1f; font-size: 14px; font-weight: 500; line-height: 20px; text-decoration: none; cursor: pointer; }
+.google-btn:disabled { opacity: 0.6; }
+[data-theme='dark'] .google-btn { border-color: #8e918f; background: #131314; color: #e3e3e3; }
+[data-theme='dark'] .google-btn .g-mark { box-sizing: content-box; padding: 3px; }
+.row.is-google { --tone: #1a73e8; border-style: dashed; border-left-style: solid; }
+.badge.tone-google { display: inline-flex; align-items: center; gap: 6px; background: color-mix(in srgb, #1a73e8 12%, var(--surface)); color: #1a73e8; }
+[data-theme='dark'] .badge.tone-google { color: #8ab4f8; }
+.event.is-google { --tone: #1a73e8; --tone-soft: color-mix(in srgb, #1a73e8 12%, var(--surface)); outline: 1px dashed color-mix(in srgb, #1a73e8 55%, transparent); outline-offset: -1px; }
+.day-btn .dots i.is-google { background: #1a73e8; }
+.card.is-google { border-style: dashed; }
+.card.is-google p + p { margin-top: 4px; }
+.hint-text.is-danger { color: var(--danger); }
+h2.with-mark { display: flex; align-items: center; gap: 8px; }
+.notice-google { display: flex; align-items: center; gap: 10px; margin-top: 14px; padding: 12px 14px; border: 1px dashed var(--line); border-radius: 18px; color: var(--ink-muted); font-size: 14px; text-decoration: none; }

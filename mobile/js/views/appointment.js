@@ -1,6 +1,6 @@
 import { emailLink, whatsappLink } from '../contacts.js';
-import { formsCard } from '../forms.js';
-import { appointmentEvent, googleCalendarUrl, calendarFile } from '../calendar.js';
+import { formAction, formsCard } from '../forms.js';
+import { googleCard, mountGoogleCard } from '../google.js';
 import { PROJECT, STATUS, TRANSITIONS } from '../data.js';
 import {
     appointmentOf,
@@ -22,7 +22,7 @@ import {
 import { refresh } from '../router.js';
 import { store } from '../store.js';
 import { avatar, backButton, confirmDialog, emptyState, icon, openSheet, statusBadge, toast } from '../ui.js';
-import { at, capitalize, dateLong, dateTime, dayKey, dayMonth, dialNumber, downloadFile, esc, timeStr, weekday } from '../util.js';
+import { at, capitalize, dateLong, dateTime, dayKey, dayMonth, dialNumber, esc, timeStr, weekday } from '../util.js';
 
 const CONFIRM = {
     cancelled: {
@@ -100,6 +100,7 @@ export default function appointmentDetail({ params, state, user }) {
     const total = appointment.documents.length;
     const next = TRANSITIONS[appointment.status].filter((s) => s !== 'scheduled');
     const canReschedule = canWrite && ['scheduled', 'confirmed'].includes(appointment.status);
+    const formButton = formAction(appointment, canWrite);
 
     const actions = next
         .map((status) => {
@@ -120,6 +121,7 @@ export default function appointmentDetail({ params, state, user }) {
                 ${appointment.serviceDetails ? `<p style="margin-top:6px">${esc(appointment.serviceDetails)}</p>` : ''}
                 <a class="link small" style="display:inline-block;margin-top:8px" href="#/atendidos/${client.id}">Ver ficha do atendido</a>
                 ${canWrite && actions ? `<div class="btn-row">${actions}</div>` : ''}
+                ${formButton ? `<div class="btn-row"><a class="btn btn-secondary btn-sm" data-form-action href="${esc(formButton.url)}" target="_blank" rel="noopener noreferrer">${esc(formButton.label)}</a></div>` : ''}
             </section>
 
             <section class="card" style="margin-top:12px">
@@ -150,7 +152,7 @@ export default function appointmentDetail({ params, state, user }) {
 
             ${formsCard(appointment, canWrite)}
             ${reminderCard(state, appointment, canWrite)}
-            ${appointment.status !== 'cancelled' ? `<section class="card"><h2>Adicionar à minha agenda</h2><p class="hint-text">Uma cópia será criada. Alterações futuras não são sincronizadas automaticamente.</p><div class="btn-row"><a class="btn btn-secondary" href="${esc(googleCalendarUrl(appointmentEvent(state, appointment)))}" target="_blank" rel="noopener noreferrer">Google Agenda</a><button class="btn btn-secondary" type="button" id="export-calendar">Baixar calendário (.ics)</button></div></section>` : ''}
+            ${googleCard(state, appointment, user)}
 
             <section class="card">
                 <div class="card-head"><h2>Histórico</h2></div>
@@ -165,13 +167,7 @@ export default function appointmentDetail({ params, state, user }) {
             </section>`,
 
         mount(root) {
-            root.querySelector('#export-calendar')?.addEventListener('click', async () => {
-                try {
-                    await downloadFile(`atendimento-${appointment.id}.ics`, calendarFile(appointmentEvent(store.state, appointment)), 'text/calendar;charset=utf-8');
-                } catch {
-                    toast('Não foi possível exportar o calendário. Tente novamente.');
-                }
-            });
+            mountGoogleCard(root);
             root.querySelectorAll('[data-status]').forEach((button) =>
                 button.addEventListener('click', () => updateStatus(appointment, button.dataset.status)),
             );

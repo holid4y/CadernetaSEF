@@ -16,13 +16,13 @@ class CalendarToolsTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_contact_and_calendar_tools_are_rendered_without_requiring_google_credentials(): void
+    public function test_contact_tools_work_without_google_and_no_calendar_file_is_offered(): void
     {
         $client = Client::factory()->create(['email' => 'ana@example.com', 'phone' => '(51) 99125-1538', 'accepts_reminders' => true]);
         $appointment = Appointment::factory()->create(['client_id' => $client->id, 'status' => AppointmentStatus::Scheduled]);
         $this->actingAs(User::factory()->create());
         $this->get(route('clients.show', $client))->assertOk()->assertSee('mailto:ana@example.com', false)->assertSee('https://mail.google.com/mail/?view=cm&amp;fs=1&amp;to=ana%40example.com', false)->assertSee('https://wa.me/5551991251538', false);
-        $this->get(route('appointments.show', $appointment))->assertOk()->assertSee('data-calendar-event', false)->assertSee('Escrever no Gmail')->assertSee('Google Agenda');
+        $this->get(route('appointments.show', $appointment))->assertOk()->assertSee('Escrever no Gmail')->assertDontSee('data-calendar-event', false)->assertDontSee('.ics');
         $this->get(route('agenda'))->assertOk()->assertDontSee('Importar de outra agenda')->assertDontSee('data-calendar-import', false);
     }
 

@@ -48,7 +48,12 @@ BEGIN
             ('agenda_reports', 'appointments', 'SELECT', false),
             ('agenda_reports', 'clients', 'SELECT', false),
             ('agenda_reports', 'users', 'SELECT', false),
-            ('agenda_reports', 'personal_access_tokens', 'SELECT', false)
+            ('agenda_reports', 'personal_access_tokens', 'SELECT', false),
+            ('agenda_app', 'google_accounts', 'DELETE', true),
+            ('agenda_app', 'google_events', 'DELETE', true),
+            ('agenda_app', 'google_event_copies', 'DELETE', true),
+            ('agenda_reports', 'google_accounts', 'SELECT', false),
+            ('agenda_reports', 'google_events', 'SELECT', false)
         ) AS rows (role_name, table_name, privilege, allowed)
     LOOP
         IF has_table_privilege(expected.role_name, 'public.' || expected.table_name, expected.privilege) <> expected.allowed THEN

@@ -56,7 +56,11 @@ web ── sessão + CSRF ──────────────────
   `{id, type, userId, at, old, new}` em ordem cronológica, convertidas do
   histórico persistido.
 - Cada atendimento traz também `integrationId`, `formsEnabled`, `formCreateUrl`
-  e `forms` (formulários vinculados, links validados por `FormLinks`).
+  e `forms` (formulários vinculados, links validados por `FormLinks`), e
+  `google` (link da cópia na agenda da própria pessoa e avisos do evento de
+  origem).
+- `google` é a conexão de quem está logado e `googleEvents` são os eventos do
+  Google esperando atendido e serviço ([google-calendar.md](google-calendar.md)).
 
 O que não sai do servidor:
 
@@ -95,6 +99,10 @@ são confiáveis: tudo é relido do banco.
 | `setServiceActive` | `[slug, active]` | `SaveService` (só admin) | `null` |
 | `addServiceDocument` | `[slug, name]` | `SaveService` (só admin, até 30 itens) | `null` |
 | `removeServiceDocument` | `[slug, index, name?]` | `SaveService` (só admin) | `null` |
+| `dismissGoogleEvent` | `[googleEventId]` | tira um evento do Google da agenda | `null` |
+
+Com `input.googleEventId`, `scheduleAppointment` usa `ImportGoogleEvent`: o
+evento fica travado durante a gravação e não vira um segundo atendimento.
 
 Os argumentos marcados com `?` são opcionais e servem para detectar alterações
 concorrentes. O `store.js` os acrescenta sozinho a partir do que a tela mostrava:

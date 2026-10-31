@@ -8,7 +8,9 @@
 set -uo pipefail
 
 ENV_FILE=${CADERNETA_ENV_FILE:-/var/www/caderneta-sef/shared/.env}
-VERIFY_SQL=${CADERNETA_VERIFY_SQL:-/usr/local/share/caderneta-sef/sql/verify.sql}
+# The copy provision.sh installed goes stale after deploys; the release in use has the current one.
+VERIFY_SQL=${CADERNETA_VERIFY_SQL:-/var/www/caderneta-sef/current/database/sql/verify.sql}
+[ -r "$VERIFY_SQL" ] || VERIFY_SQL=/usr/local/share/caderneta-sef/sql/verify.sql
 
 env_value() { grep -E "^$1=" "$ENV_FILE" | tail -n 1 | cut -d= -f2- | sed -E 's/^"(.*)"$/\1/'; }
 ok() { echo "  ok    $*"; }

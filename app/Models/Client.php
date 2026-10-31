@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Domain\Clients\Enums\ClientType;
+use App\Jobs\SyncAppointmentToGoogle;
 use App\Support\BlindIndex;
 use App\Support\ContactLinks;
 use Database\Factories\ClientFactory;
@@ -37,6 +38,19 @@ class Client extends Model
             if ($client->isDirty('accepts_reminders')) {
                 $client->reminders_consented_at = $client->accepts_reminders ? now() : null;
             }
+        });
+
+        // The name is in the title of the copies in Google.
+        static::updated(function (Client $client): void {
+            if (! $client->wasChanged('name')) {
+                return;
+            }
+
+            GoogleEventCopy::query()
+                ->whereIn('appointment_id', $client->appointments()->select('id'))
+                ->distinct()
+                ->pluck('appointment_id')
+                ->each(fn (int $id) => SyncAppointmentToGoogle::dispatch($id)->afterCommit());
         });
     }
 

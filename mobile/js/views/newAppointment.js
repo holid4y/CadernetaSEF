@@ -11,8 +11,9 @@ import {
 } from '../domain.js';
 import { back, navigate } from '../router.js';
 import { store } from '../store.js';
-import { backButton, emptyState, icon, toast } from '../ui.js';
-import { addDays, at, capitalize, dateFull, dayKey, esc, minutes, plural, weekday } from '../util.js';
+import { GOOGLE_MARK, googleEventOf } from '../google.js';
+import { backButton, confirmDialog, emptyState, icon, toast } from '../ui.js';
+import { addDays, at, capitalize, dateFull, dayKey, esc, minutes, plural, timeStr, weekday } from '../util.js';
 import { clientFormBody, mountClientForm } from './clients.js';
 
 const DURATIONS = [30, 60, 90, 120, 180];
@@ -28,6 +29,8 @@ const newDraft = (query, state, user) => {
     const [day, time] = (query.inicio ?? '').split('T');
     const owner = responsibles(state).find((u) => u.id === user.id) ?? responsibles(state)[0];
     const client = query.atendido ? clientOf(state, Number(query.atendido)) : null;
+    const event = query.google ? googleEventOf(state, Number(query.google)) : null;
+    const eventOwner = event ? responsibles(state).find((u) => u.id === event.ownerId) : null;
 
     return {
         step: client ? 2 : 1,
@@ -36,14 +39,15 @@ const newDraft = (query, state, user) => {
         categorySlug: null,
         serviceSlug: null,
         serviceDetails: '',
-        date: /^\d{4}-\d{2}-\d{2}$/.test(day ?? '') ? day : dayKey(Date.now()),
-        start: TIME.test(time ?? '') ? time : '',
-        end: '',
-        duration: 60,
-        responsibleId: owner.id,
+        date: event ? dayKey(event.start) : /^\d{4}-\d{2}-\d{2}$/.test(day ?? '') ? day : dayKey(Date.now()),
+        start: event ? timeStr(event.start) : TIME.test(time ?? '') ? time : '',
+        end: event ? timeStr(event.end) : '',
+        duration: event ? Math.round((event.end - event.start) / 60_000) : 60,
+        responsibleId: (eventOwner ?? owner).id,
         locationType: 'on_campus',
-        location: '',
+        location: event?.location ?? '',
         notes: '',
+        googleEvent: event,
     };
 };
 
@@ -119,7 +123,15 @@ const stepClient = (state) => {
         return `<h2>Cadastrar novo atendido</h2><p class="muted" style="margin:4px 0 16px">Só o essencial: o restante pode ser completado depois na ficha.</p>${clientFormBody(null, { compact: true })}`;
     }
 
-    return `<h2>Quem será atendido?</h2>
+    const event = draft.googleEvent;
+    const fromGoogle = event
+        ? `<section class="card is-google"><p class="muted small">${GOOGLE_MARK}Do Google Agenda · ${esc(dateFull(event.start))} às ${timeStr(event.start)}</p>
+            <p><b>${esc(event.title)}</b></p>
+            <p class="hint-text">Escolha o atendido e o serviço para transformar o evento em atendimento. Se o horário mudar no Google, muda aqui também.</p>
+            <button class="link small" type="button" id="dismiss-google">Não é um atendimento</button></section>`
+        : '';
+
+    return `${fromGoogle}<h2>Quem será atendido?</h2>
         <div class="search" style="margin:14px 0" role="search">
             ${icon('search')}
             <label class="sr-only" for="q">Buscar atendido</label>
@@ -165,6 +177,17 @@ const wireClient = (box, show, state) => {
     box.querySelector('#create-client').addEventListener('click', () => {
         draft.creating = true;
         show();
+    });
+    box.querySelector('#dismiss-google')?.addEventListener('click', async () => {
+        const ok = await confirmDialog({ title: 'Tirar este evento da agenda?', message: 'Ele continua no Google, só não aparece mais na Caderneta.', confirmLabel: 'Tirar' });
+        if (!ok) return;
+        try {
+            await store.action('dismissGoogleEvent', draft.googleEvent.id);
+            toast('O evento não vai mais aparecer na agenda.');
+            navigate('/agenda', { replace: true });
+        } catch (error) {
+            toast(error.message);
+        }
     });
 };
 
@@ -213,7 +236,7 @@ const wireService = (box, show) => {
             if (draft.categorySlug !== button.dataset.category) draft.serviceSlug = null;
             draft.categorySlug = button.dataset.category;
             if (draft.categorySlug === 'outros') draft.serviceSlug = 'outros';
-            if (draft.serviceSlug) draft.duration = serviceOf(store.state, draft.serviceSlug).minutes;
+            if (draft.serviceSlug && !draft.googleEvent) draft.duration = serviceOf(store.state, draft.serviceSlug).minutes;
             show();
         }),
     );
@@ -221,7 +244,7 @@ const wireService = (box, show) => {
     box.querySelectorAll('[data-service]').forEach((button) =>
         button.addEventListener('click', () => {
             draft.serviceSlug = button.dataset.service;
-            draft.duration = serviceOf(store.state, draft.serviceSlug).minutes;
+            if (!draft.googleEvent) draft.duration = serviceOf(store.state, draft.serviceSlug).minutes;
             show();
         }),
     );
@@ -404,6 +427,7 @@ const wireWhen = (box, show, state) => {
                 locationType: draft.locationType,
                 location: draft.location,
                 notes: draft.notes,
+                googleEventId: draft.googleEvent?.id ?? null,
             });
             toast('Atendimento agendado.');
             navigate(`/atendimentos/${created.id}`, { replace: true });

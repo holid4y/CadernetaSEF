@@ -6,5 +6,6 @@ return [
     'dashboard' => 'Painel',
     'agenda' => 'Agenda',
     'clients' => 'Atendidos',
+    'impact' => 'Impacto',
     'services' => 'Serviços',
 ];

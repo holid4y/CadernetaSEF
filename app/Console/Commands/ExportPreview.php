@@ -113,6 +113,7 @@ final class ExportPreview extends Command
 
         return [
             '/agenda',
+            '/impacto',
             '/atendidos',
             '/atendidos/novo',
             '/atendimentos/novo',

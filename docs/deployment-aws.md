@@ -150,7 +150,15 @@ sudo -u caderneta caderneta-deploy --ref main --migrate  # com migrations, após
 ```
 
 Cada deploy é uma pasta nova em `releases/`. A troca é atômica (symlink
-`current`), e o site só fica em manutenção durante migrations. Se `/up` não
+`current`), e o site só fica em manutenção durante migrations. A versão com o
+Google Agenda traz a migration `2026_10_31_000001_create_google_calendar_tables`
+e as variáveis `GOOGLE_CLIENT_ID` e `GOOGLE_CLIENT_SECRET`
+([google-calendar.md](google-calendar.md)). Os scripts de `/usr/local/bin`
+e os `.sql` de `/usr/local/share/caderneta-sef/sql` são cópias feitas pelo
+`provision.sh`: depois de atualizá-los no repositório, rode o `provision.sh` de
+novo. O `caderneta-check-db` já lê o `verify.sql` da versão em uso; o
+`caderneta-database-setup`, que roda como root, continua usando só a cópia de
+`/usr/local/share`, de propósito. Se `/up` não
 responder, a versão anterior volta sozinha. Rollback manual e demais cuidados:
 [operations.md](operations.md).
 

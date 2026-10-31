@@ -4,9 +4,13 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Domain\Appointments\Actions\ScheduleAppointment;
 use App\Domain\Appointments\Enums\AppointmentStatus;
 use App\Models\Appointment;
+use App\Models\Client;
 use App\Models\ExternalForm;
+use App\Models\Service;
+use App\Models\ServiceCategory;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -204,19 +208,69 @@ class FormIntegrationTest extends TestCase
         $this->signed('POST', self::PATH, $this->payload(), ['CONTENT_TYPE' => 'text/plain'])->assertStatus(415);
     }
 
-    public function test_signed_lookup_only_exposes_the_shared_reference_status_and_dates(): void
+    public function test_signed_lookup_sends_what_a_form_needs_but_not_the_team_notes(): void
     {
-        $appointment = Appointment::factory()->create(['notes' => 'Private notes']);
+        $client = Client::factory()->create(['name' => 'Joana Lima', 'document' => '529.982.247-25', 'email' => 'joana@example.com', 'phone' => '(51) 99125-1538', 'notes' => 'Nota da equipe']);
+        $service = Service::factory()->for(ServiceCategory::factory()->create(['name' => 'Fiscal']), 'category')->withDocuments(['Informe de rendimentos'])->create(['slug' => 'irpf', 'name' => 'IRPF']);
+        $appointment = app(ScheduleAppointment::class)->handle(User::factory()->create(['name' => 'Ana']), [
+            'client_id' => $client->id, 'service_id' => $service->id, 'responsible_user_id' => User::factory()->create(['name' => 'Bruno'])->id,
+            'starts_at' => now()->addDay()->startOfHour(), 'ends_at' => now()->addDay()->startOfHour()->addHour(),
+            'location' => 'Sala 2', 'notes' => 'Observação interna',
+        ]);
+        $this->send($this->payload(['appointment_id' => $appointment->integration_id]))->assertOk();
         $path = '/api/v1/integrations/forms/appointments/'.$appointment->integration_id;
-        $this->signed('GET', $path)->assertOk()->assertExactJson([
+
+        $response = $this->signed('GET', $path)->assertOk()->assertHeader('Cache-Control', 'no-store, private');
+
+        $response->assertJson([
             'appointment_id' => $appointment->integration_id,
             'status' => 'scheduled',
-            'starts_at' => $appointment->starts_at->toIso8601String(),
-            'ends_at' => $appointment->ends_at->toIso8601String(),
-        ])->assertHeader('Cache-Control', 'no-store, private');
+            'location' => 'Sala 2',
+            'service' => ['slug' => 'irpf', 'name' => 'IRPF', 'category' => 'Fiscal'],
+            'responsible' => ['name' => 'Bruno'],
+            'client' => ['name' => 'Joana Lima', 'document' => '529.982.247-25', 'email' => 'joana@example.com', 'phone' => '(51) 99125-1538'],
+            'documents' => [['name' => 'Informe de rendimentos', 'received' => false]],
+            'forms' => [['form_id' => 'partner-form-1', 'status' => 'pending', 'url' => 'https://forms.example.test/forms/one']],
+        ]);
+        $this->assertStringNotContainsString('interna', $response->getContent());
+        $this->assertStringNotContainsString('Nota da equipe', $response->getContent());
         $this->getJson($path)->assertUnauthorized();
         $appointment->delete();
         $this->signed('GET', $path)->assertNotFound();
+    }
+
+    public function test_the_platform_lists_the_appointments_of_a_period_page_by_page(): void
+    {
+        $this->travelTo('2026-10-05 12:00');
+        Appointment::factory()->between('2026-10-06 13:00', '2026-10-06 14:00')->create();
+        Appointment::factory()->between('2026-10-20 13:00', '2026-10-20 14:00')->create();
+        Appointment::factory()->between('2026-12-20 13:00', '2026-12-20 14:00')->create();
+
+        $this->signed('GET', '/api/v1/integrations/forms/appointments?from=2026-10-01&to=2026-10-31')
+            ->assertOk()
+            ->assertJsonCount(2, 'data')
+            ->assertJsonPath('next_page', null)
+            ->assertJsonPath('data.0.starts_at', '2026-10-06T13:00:00+00:00');
+        $this->signed('GET', '/api/v1/integrations/forms/appointments?from=2026-01-01&to=2026-12-31')->assertUnprocessable();
+        $this->signed('GET', '/api/v1/integrations/forms/appointments?from[]=x&to=2026-10-31')->assertUnprocessable();
+        $this->getJson('/api/v1/integrations/forms/appointments?from=2026-10-01&to=2026-10-31')->assertUnauthorized();
+    }
+
+    public function test_each_appointment_has_one_button_for_its_form_done_or_to_do(): void
+    {
+        $appointment = Appointment::factory()->create();
+        $button = fn () => $this->get(route('appointments.show', $appointment))->assertOk();
+        $this->actingAs(User::factory()->create());
+
+        $button()->assertSee('data-form-action', false)->assertSee('Preencher formulário')
+            ->assertSee('appointment_id='.$appointment->integration_id, false);
+
+        $this->send($this->payload(['appointment_id' => $appointment->integration_id, 'status' => 'completed']))->assertOk();
+        $button()->assertSee('Ver formulário feito')->assertSee('https://forms.example.test/forms/one', false);
+
+        $this->actingAs(User::factory()->viewer()->create());
+        $button()->assertSee('Ver formulário feito');
+        $this->get(route('appointments.show', Appointment::factory()->create()))->assertDontSee('data-form-action', false);
     }
 
     public function test_staff_can_review_and_link_a_pending_form(): void
@@ -229,7 +283,7 @@ class FormIntegrationTest extends TestCase
         $this->post(route('forms.link', $form), ['appointment_id' => $appointment->integration_id])
             ->assertRedirect(route('appointments.show', $appointment))->assertSessionHas('notice', 'Formulário vinculado ao atendimento.');
         $this->assertDatabaseHas('external_forms', ['appointment_id' => $appointment->id, 'appointment_reference' => $appointment->integration_id]);
-        $this->get(route('appointments.show', $appointment))->assertOk()->assertSee('Abrir formulário')
+        $this->get(route('appointments.show', $appointment))->assertOk()->assertSee('Preencher formulário')
             ->assertSee($appointment->integration_id)->assertSee('https://forms.example.test/forms/one', false)
             ->assertSee('appointment_id='.$appointment->integration_id, false);
         $other = Appointment::factory()->create();

@@ -29,6 +29,27 @@ final class FormLinks
             ? $form->url : null;
     }
 
+    /**
+     * The one button an appointment shows for its form: the latest form,
+     * done or still to do, or a new one when there is none yet.
+     *
+     * @return ?array{label: string, url: string}
+     */
+    public static function action(Appointment $appointment, bool $canWrite): ?array
+    {
+        foreach ($appointment->externalForms as $form) {
+            $url = self::open($form);
+
+            if ($url !== null) {
+                return ['label' => $form->actionLabel(), 'url' => $url];
+            }
+        }
+
+        $create = $canWrite ? self::create($appointment) : null;
+
+        return $create === null ? null : ['label' => 'Preencher formulário', 'url' => $create];
+    }
+
     public static function create(Appointment $appointment): ?string
     {
         $url = config('services.forms.create_url');

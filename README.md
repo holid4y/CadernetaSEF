@@ -9,7 +9,10 @@ caixa e prestação de contas.
 Pelo sistema a equipe cadastra quem vai ser atendido, marca o horário com
 alguém do grupo e acompanha o atendimento até o fim, junto com a lista de
 documentos que a pessoa precisa trazer. Se o atendido autorizar, ele recebe um
-lembrete por e-mail um dia antes.
+lembrete por e-mail um dia antes. Quem conecta a conta Google vê os próprios
+atendimentos na Google Agenda, e os eventos marcados lá entram na Caderneta para
+serem completados. A aba Impacto reúne os números para os relatórios, na web e
+no app.
 
 Dá para ver funcionando sem instalar nada: tem a
 [prévia da web](https://holid4y.github.io/CadernetaSEF/) e a
@@ -88,6 +91,7 @@ precisa estar em GitHub Actions. Com *Deploy from a branch* a prévia sai do ar.
 - [Operação do dia a dia](docs/operations.md)
 - [O que ainda falta para produção](docs/production-readiness.md)
 - [API do app](docs/mobile-integration.md)
+- [Google Agenda](docs/google-calendar.md)
 - [Integração com formulários](docs/forms-integration.md)
 
 ## Equipe

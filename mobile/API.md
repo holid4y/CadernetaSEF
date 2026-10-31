@@ -41,6 +41,13 @@ adaptar `store.js` no futuro.
 - `service.documents` é um array de nomes; `appointment.documents` contém
   `{id, name, receivedAt}`. Atendimentos também incluem `activities` e
   `reminderSentAt`; consulte `domain.js` para os demais campos.
+- `state.google` traz a conexão de quem está logado: `{available, connected,
+  email, needsReconnect, calendarId, calendarName, pulledAt, webUrl}`.
+- `state.googleEvents` lista os eventos do Google que esperam atendido e
+  serviço: `{id, title, location, start, end, ownerId}`.
+- Cada atendimento traz `google: {link, fromGoogle, removed, error,
+  googleStart, googleEnd}`. `link` só aponta para a cópia na agenda da própria
+  pessoa.
 
 ## Comandos
 
@@ -61,6 +68,10 @@ O cliente só substitui o estado depois de uma resposta de sucesso.
 | `setServiceActive` | `[slug, active]` | null |
 | `addServiceDocument` | `[slug, name]` | null |
 | `removeServiceDocument` | `[slug, index, name?]` | null |
+| `dismissGoogleEvent` | `[googleEventId]` | null |
+
+`scheduleAppointment` aceita `input.googleEventId`: o atendimento nasce ligado
+ao evento do Google, que não pode virar outro atendimento (409).
 
 Os argumentos com `?` são opcionais e o `store.js` os preenche com o que a tela
 mostrava: `input.updatedAt` também vale para `saveClient`. Quando não batem com o
@@ -93,14 +104,27 @@ Respostas autenticadas devem usar `Cache-Control: no-store`. Nenhum segredo ou
 credencial de banco deve ser incluído no app. Não há fila de gravação offline
 em modo servidor: falhas são exibidas e o usuário pode tentar novamente.
 
-## Contatos e calendário
+## Contatos
 
 Atalhos `mailto:` e `wa.me` são manuais e não chamam `sendReminder`. O funcionário
 escolhe a conta de e-mail remetente no aplicativo do aparelho. Só a operação de
 envio do servidor pode atualizar `reminder_sent_at`.
 
-A exportação para o Google Agenda e o arquivo `.ics` são gerados no aparelho, sem
-chamar a API: [integrações de calendário](../docs/calendar-integrations.md).
+## Google Agenda
+
+Rotas com o mesmo token, só para quem agenda atendimentos:
+
+| Rota | Resposta |
+| --- | --- |
+| `GET /google` | `{google}` (o mesmo de `state.google`) |
+| `GET /google/calendars` | `{calendars: [{id, name, primary}]}`, sem a agenda “Caderneta SEF” |
+| `PUT /google` `{calendarId\|null}` | `{google}`; `null` para de trazer eventos |
+| `POST /google/connect` | `{url}`: link de uso único, válido por 5 minutos, para abrir no navegador do sistema |
+| `DELETE /google` | `{google}`; apaga a agenda “Caderneta SEF” e revoga o acesso |
+
+O login no Google nunca acontece dentro do app. O app abre `url` no navegador,
+confere antes que o link é do próprio servidor e recarrega o estado quando volta
+para a frente. Regras completas: [google-calendar.md](../docs/google-calendar.md).
 
 ## Formulários do parceiro
 

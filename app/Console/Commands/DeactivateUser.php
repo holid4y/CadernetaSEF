@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
+use App\Domain\Google\Actions\DisconnectGoogleAccount;
+use App\Models\GoogleAccount;
 use App\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -15,9 +17,9 @@ final class DeactivateUser extends Command
         {email : Login e-mail}
         {--undo : Give the access back}';
 
-    protected $description = 'Block a staff account, ending its web sessions and mobile tokens';
+    protected $description = 'Block a staff account, ending its web sessions, mobile tokens and Google connection';
 
-    public function handle(): int
+    public function handle(DisconnectGoogleAccount $disconnectGoogle): int
     {
         $user = User::query()->where('email', mb_strtolower(trim((string) $this->argument('email'))))->first();
 
@@ -38,6 +40,13 @@ final class DeactivateUser extends Command
             $user->update(['active' => false]);
             $user->signOutEverywhere();
         });
+
+        // A blocked account must not keep reading or writing a Google calendar.
+        $google = GoogleAccount::query()->where('user_id', $user->id)->first();
+
+        if ($google !== null) {
+            $disconnectGoogle->handle($google);
+        }
 
         $this->components->info("{$user->email} was blocked and signed out everywhere.");
 

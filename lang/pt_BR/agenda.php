@@ -17,4 +17,5 @@ return [
     'legend' => 'Legenda',
     'empty' => 'Nenhum atendimento neste período.',
     'range_too_long' => 'Peça no máximo 45 dias por vez.',
+    'waiting_from_google' => '{1} 1 evento do Google está na agenda esperando atendido e serviço. Clique nele para completar.|[2,*] :count eventos do Google estão na agenda esperando atendido e serviço. Clique neles para completar.',
 ];

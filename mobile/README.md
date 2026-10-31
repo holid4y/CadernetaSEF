@@ -55,9 +55,12 @@ Atalhos de e-mail e WhatsApp ficam na ficha e nos lembretes, com validação dos
 contatos. O e-mail abre no aplicativo do funcionário; ele escolhe a conta e
 confirma o envio. Lembretes exigem consentimento e perfil com escrita.
 
-Nos detalhes do atendimento, use “Google Agenda” para criar uma cópia ou exporte
-um `.ics`. A cópia não é sincronizada automaticamente. Veja os
-[detalhes e limites](../docs/calendar-integrations.md).
+A conta Google se conecta pelo Perfil → Google Agenda: o app abre o Google no
+navegador do celular com um link de uso único e, ao voltar, mostra a conta
+ligada. Os atendimentos da pessoa vão sozinhos para a agenda “Caderneta SEF”, e
+os eventos da agenda escolhida aparecem na Agenda como “a completar”. Na versão
+de demonstração essa parte não aparece. Detalhes:
+[google-calendar.md](../docs/google-calendar.md).
 
 ## Formulários vinculados
 

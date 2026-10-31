@@ -13,6 +13,7 @@ use App\Domain\Appointments\Actions\UndoStatusChange;
 use App\Domain\Appointments\Enums\AppointmentStatus;
 use App\Domain\Appointments\Enums\LocationType;
 use App\Domain\Clients\Actions\SaveClient;
+use App\Domain\Google\Actions\ImportGoogleEvent;
 use App\Domain\Services\Actions\SaveService;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\MobileCommandRequest;
@@ -21,6 +22,7 @@ use App\Http\Resources\Mobile\ClientResource;
 use App\Http\Resources\Mobile\MobileState;
 use App\Models\Appointment;
 use App\Models\Client;
+use App\Models\GoogleEvent;
 use App\Models\Service;
 use App\Models\User;
 use App\Support\ContactLinks;
@@ -65,6 +67,7 @@ class MobileCommandController extends Controller
         private SendAppointmentReminder $sendReminder,
         private UndoStatusChange $undo,
         private SaveService $saveService,
+        private ImportGoogleEvent $importGoogleEvent,
     ) {}
 
     public function __invoke(MobileCommandRequest $request): JsonResponse
@@ -84,6 +87,7 @@ class MobileCommandController extends Controller
                 'setServiceActive' => $this->setServiceActive($args),
                 'addServiceDocument' => $this->addServiceDocument($args),
                 'removeServiceDocument' => $this->removeServiceDocument($args),
+                'dismissGoogleEvent' => $this->dismissGoogleEvent($args),
             };
         } catch (ValidationException $error) {
             throw self::forTheApp($error);
@@ -147,9 +151,10 @@ class MobileCommandController extends Controller
             'input.locationType' => ['nullable', Rule::enum(LocationType::class)],
             'input.location' => ['nullable', 'string', 'max:255'],
             'input.notes' => ['nullable', 'string', 'max:2000'],
+            'input.googleEventId' => ['nullable', 'integer'],
         ])['input'];
 
-        $appointment = $this->schedule->handle($user, [
+        $attributes = [
             'client_id' => $input['clientId'],
             'service_id' => Service::query()->where('slug', $input['serviceSlug'])->value('id'),
             'responsible_user_id' => $input['responsibleId'],
@@ -159,7 +164,11 @@ class MobileCommandController extends Controller
             'location_type' => $input['locationType'] ?? LocationType::OnCampus->value,
             'location' => $input['location'] ?? null,
             'notes' => $input['notes'] ?? null,
-        ]);
+        ];
+
+        $appointment = isset($input['googleEventId'])
+            ? $this->importGoogleEvent->handle($user, $input['googleEventId'], $attributes)
+            : $this->schedule->handle($user, $attributes);
 
         return self::appointment($appointment);
     }
@@ -263,6 +272,24 @@ class MobileCommandController extends Controller
         Gate::authorize('update', $appointment);
 
         $this->undo->handle($user, $appointment, AppointmentStatus::tryFrom($data['snapshot']['status'] ?? ''));
+
+        return null;
+    }
+
+    private function dismissGoogleEvent(array $args): null
+    {
+        Gate::authorize('create', Appointment::class);
+        $data = self::validate($args, ['id'], ['id' => ['required', 'integer']]);
+
+        DB::transaction(function () use ($data): void {
+            $event = GoogleEvent::query()->lockForUpdate()->findOrFail($data['id']);
+
+            if (! $event->isPending()) {
+                throw ValidationException::withMessages(['google' => __('google.errors.already_imported')])->status(409);
+            }
+
+            $event->update(['dismissed_at' => now()]);
+        });
 
         return null;
     }

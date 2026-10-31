@@ -2,6 +2,7 @@
     $canUpdate = auth()->user()->can('update', $appointment);
     $documents = $appointment->documents;
     $received = $documents->filter->isReceived()->count();
+    $formAction = App\Support\FormLinks::action($appointment, $canUpdate);
 @endphp
 
 <div class="space-y-6">
@@ -22,6 +23,13 @@
                 {{ __('appointments.show.client_page') }}
             </a>
         </div>
+
+        @if ($formAction)
+            <a href="{{ $formAction['url'] }}" target="_blank" rel="noopener noreferrer" data-form-action
+               class="press inline-flex min-h-11 items-center gap-2 rounded-full border border-line bg-surface px-4 text-sm font-semibold text-primary hover:bg-sunken">
+                {{ $formAction['label'] }}
+            </a>
+        @endif
 
         @if ($canUpdate && $appointment->status->allowedTransitions())
             <div class="flex flex-wrap gap-2">
@@ -164,7 +172,7 @@
 
         <div class="space-y-6 self-start">
             <x-appointment-forms :appointment="$appointment" />
-            <x-calendar-links :appointment="$appointment" />
+            <x-google-calendar-card :appointment="$appointment" />
             @if ($appointment->status->canBeRescheduled())
                 <x-card>
                     <h2 class="text-2xl">{{ __('reminders.card.title') }}</h2>

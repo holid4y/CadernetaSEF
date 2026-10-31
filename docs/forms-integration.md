@@ -1,9 +1,12 @@
 # Integração com a plataforma de formulários
 
-O Laravel recebe metadados dos formulários do outro grupo e os vincula aos
-atendimentos. O conteúdo das respostas continua na plataforma de formulários.
-O funcionário abre o formulário pelos detalhes do atendimento, inclusive depois
-da conclusão. Cada plataforma mantém seu próprio login e suas permissões.
+O Laravel recebe metadados dos formulários do outro grupo, os vincula aos
+atendimentos e entrega à plataforma deles os dados de cada atendimento, para os
+formulários já virem preenchidos. O conteúdo das respostas continua na
+plataforma de formulários. Cada atendimento, na web e no app, tem um botão para
+o formulário: “Preencher formulário” enquanto ele está por fazer (ou ainda não
+existe) e “Ver formulário feito” depois de concluído. Cada plataforma mantém seu
+próprio login e suas permissões.
 
 Esta API está implementada, assim como a [API do aplicativo](mobile-integration.md),
 que é separada e usa tokens de funcionários. A integração real com o outro grupo
@@ -15,7 +18,8 @@ Cada atendimento tem um UUID persistido em `appointments.integration_id`. A
 migration preenche também os registros existentes, inclusive os removidos
 logicamente. O identificador não depende de nome, CPF, horário ou das respostas.
 
-O link “Criar formulário” acrescenta `appointment_id=<UUID>` à URL configurada.
+O botão “Preencher formulário” de um atendimento sem formulário acrescenta
+`appointment_id=<UUID>` à URL configurada.
 A plataforma parceira deve guardar essa referência e devolvê-la nas notificações.
 O funcionário também pode copiar a referência nos detalhes do atendimento.
 O UUID identifica o atendimento; ele não é uma credencial de acesso.
@@ -147,21 +151,48 @@ versão maior. Reenvio sem `appointment_id` preserva um vínculo já existente.
 
 ## Consulta pelo parceiro
 
-`GET /api/v1/integrations/forms/appointments/{UUID}`, com os mesmos cabeçalhos
-de assinatura e corpo vazio, responde apenas:
+As consultas usam os mesmos cabeçalhos de assinatura e corpo vazio.
+
+`GET /api/v1/integrations/forms/appointments/{UUID}` devolve o atendimento:
 
 ```json
 {
   "appointment_id": "b30acc5c-b024-4eb0-955a-8e76f9c3a610",
-  "status": "completed",
+  "status": "scheduled",
+  "status_label": "Agendado",
   "starts_at": "2026-10-22T12:00:00+00:00",
-  "ends_at": "2026-10-22T13:00:00+00:00"
+  "ends_at": "2026-10-22T13:00:00+00:00",
+  "location_type": "on_campus",
+  "location": "Sala 205",
+  "service": { "slug": "irpf", "name": "IRPF", "category": "Fiscal", "details": null },
+  "responsible": { "name": "Ana Souza" },
+  "client": {
+    "type": "individual",
+    "name": "Joana Lima",
+    "trade_name": null,
+    "document": "529.982.247-25",
+    "email": "joana@exemplo.com",
+    "phone": "(51) 99125-1538"
+  },
+  "documents": [{ "name": "Informe de rendimentos", "received": false }],
+  "forms": [{ "form_id": "formulario-123", "title": "Ficha de atendimento", "status": "pending", "url": "https://formularios.exemplo.com/formularios/123" }],
+  "created_at": "2026-10-20T14:03:11+00:00",
+  "updated_at": "2026-10-21T09:15:40+00:00"
 }
 ```
 
-Não há listagem pública de atendimentos ou busca por CPF. Referências inexistentes
-ou atendimentos removidos logicamente respondem 404. A consulta não informa nome,
-contato, observações ou documentos do atendido.
+`GET /api/v1/integrations/forms/appointments?from=2026-10-01&to=2026-10-31`
+lista os atendimentos que acontecem entre os dois dias (horário de São Paulo,
+incluindo os dois), no mesmo formato, 50 por página, em ordem de início:
+`{"data": [...], "next_page": 2}`. Peça a página seguinte com `&page=2` até
+`next_page` vir `null`. O período vai até 92 dias. Assine o caminho com a query
+exatamente como enviada.
+
+Referências inexistentes ou atendimentos removidos logicamente respondem 404.
+As observações internas da equipe e o histórico não saem da Caderneta.
+CPF/CNPJ, e-mail e telefone saem, porque os formulários precisam deles: a
+plataforma parceira passa a tratar esses dados pessoais e deve guardá-los com o
+mesmo cuidado (LGPD), sem expor a outros sistemas.
 
 ## Exemplo de envio pelo servidor parceiro
 

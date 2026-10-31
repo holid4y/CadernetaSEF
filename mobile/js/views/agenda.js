@@ -1,5 +1,6 @@
 import { STATUS } from '../data.js';
 import { appointmentsOnDay, can, clientOf, responsibles, serviceOf } from '../domain.js';
+import { googleEventRow, googleEventsOnDay } from '../google.js';
 import { navigate, refresh } from '../router.js';
 import { appointmentRow, emptyState, icon, openSheet } from '../ui.js';
 import {
@@ -51,7 +52,8 @@ const rangeLabel = (from, to) => {
 
 const dotsFor = (state, ms) => {
     const open = appointmentsOnDay(state, ms, { responsibleId: view.responsibleId, showClosed: view.showClosed }).filter((a) => !['cancelled', 'no_show'].includes(a.status) || view.showClosed);
-    return `<span class="dots">${open.slice(0, 3).map(() => '<i></i>').join('')}</span>`;
+    const waiting = googleEventsOnDay(state, ms, { responsibleId: view.responsibleId });
+    return `<span class="dots">${[...open.map(() => '<i></i>'), ...waiting.map(() => '<i class="is-google"></i>')].slice(0, 3).join('')}</span>`;
 };
 
 const dayButton = (state, ms, { out = false } = {}) => {
@@ -123,12 +125,21 @@ const dayTimeline = (state, user) => {
         })
         .join('');
 
-    const events = layoutColumns(items)
+    const waiting = googleEventsOnDay(state, view.selected, { responsibleId: view.responsibleId }).map((event) => ({ ...event, fromGoogle: true }));
+    const events = layoutColumns([...items, ...waiting].sort((a, b) => a.start - b.start))
         .map(({ a, col, cols }) => {
             const top = Math.max(0, (minutesOfDay(a.start) - FIRST_HOUR * 60) * px);
             const height = Math.max(34, (Math.min(minutesOfDay(a.end), LAST_HOUR * 60) - Math.max(minutesOfDay(a.start), FIRST_HOUR * 60)) * px - 2);
             const width = 100 / cols;
-            return `<a class="event tone-${STATUS[a.status].tone}" href="#/atendimentos/${a.id}" style="top:${top}px;height:${height}px;left:calc(${col * width}% + 2px);width:calc(${width}% - 4px)"
+            const position = `top:${top}px;height:${height}px;left:calc(${col * width}% + 2px);width:calc(${width}% - 4px)`;
+            if (a.fromGoogle) {
+                return `<a class="event is-google" ${canCreate ? `href="#/atendimentos/novo?google=${encodeURIComponent(a.id)}"` : ''} style="${position}"
+                    aria-label="Evento do Google: ${esc(a.title)}, ${timeStr(a.start)} às ${timeStr(a.end)}, a completar">
+                    <b>${esc(a.title)}</b>
+                    <span>${timeStr(a.start)} · a completar</span>
+                </a>`;
+            }
+            return `<a class="event tone-${STATUS[a.status].tone}" href="#/atendimentos/${a.id}" style="${position}"
                 aria-label="${esc(clientOf(state, a.clientId).name)}, ${timeStr(a.start)} às ${timeStr(a.end)}, ${STATUS[a.status].label}">
                 <b>${esc(clientOf(state, a.clientId).name)}</b>
                 <span>${timeStr(a.start)} · ${esc(serviceOf(state, a.serviceSlug).name)}</span>
@@ -146,14 +157,16 @@ const dayTimeline = (state, user) => {
         ${canCreate ? '<p class="hint-text" style="margin-top:12px">Toque em um horário livre para agendar.</p>' : ''}`;
 };
 
-const dayList = (state) => {
+const dayList = (state, user) => {
     const items = appointmentsOnDay(state, view.selected, { responsibleId: view.responsibleId, showClosed: view.showClosed });
+    const waiting = googleEventsOnDay(state, view.selected, { responsibleId: view.responsibleId });
     return `<div class="day-heading"><span>${esc(capitalize(dateLong(view.selected)))}</span><span>${items.length} ${items.length === 1 ? 'atendimento' : 'atendimentos'}</span></div>
         ${
             items.length
                 ? `<div class="list">${items.map((a) => appointmentRow(state, a)).join('')}</div>`
-                : emptyState({ title: 'Dia livre', text: 'Nenhum atendimento neste dia.' })
-        }`;
+                : waiting.length ? '' : emptyState({ title: 'Dia livre', text: 'Nenhum atendimento neste dia.' })
+        }
+        ${waiting.length ? `<div class="day-heading"><span>Do Google, para completar</span><span>${waiting.length}</span></div><div class="list">${waiting.map((event) => googleEventRow(state, event, user)).join('')}</div>` : ''}`;
 };
 
 export default function agenda({ state, user }) {
@@ -165,9 +178,9 @@ export default function agenda({ state, user }) {
     }[view.mode];
 
     const body = {
-        week: () => `${weekView(state)}${dayList(state)}`,
+        week: () => `${weekView(state)}${dayList(state, user)}`,
         day: () => dayTimeline(state, user),
-        month: () => `${monthView(state)}${dayList(state)}`,
+        month: () => `${monthView(state)}${dayList(state, user)}`,
     }[view.mode]();
 
     const canCreate = can(user, 'appointments.write');

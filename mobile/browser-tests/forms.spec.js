@@ -36,8 +36,9 @@ async function signIn(page, { viewer = false, deleted = false } = {}) {
 test('completed appointments expose only trusted form links and fit narrow and rotated screens', async ({ page }) => {
     await page.setViewportSize({ width: 280, height: 740 });
     await signIn(page);
-    await expect(page.getByRole('link', { name: 'Abrir formulário', exact: true })).toHaveAttribute('href', 'https://forms.example.test/one');
-    await expect(page.getByRole('link', { name: 'Criar formulário', exact: true })).toBeVisible();
+    await expect(page.locator('[data-form-action]')).toHaveText('Ver formulário feito');
+    await expect(page.locator('[data-form-action]')).toHaveAttribute('href', 'https://forms.example.test/one');
+    await expect(page.locator('.card').getByRole('link', { name: 'Preencher formulário', exact: true })).toBeVisible();
     await expect(page.locator('a[href*="untrusted.example.test"]')).toHaveCount(0);
     await expect(page.getByText('<script>example</script>', { exact: true })).toBeVisible();
     for (const viewport of [{ width: 280, height: 740 }, { width: 740, height: 280 }]) {
@@ -48,7 +49,7 @@ test('completed appointments expose only trusted form links and fit narrow and r
 
 test('viewers cannot create forms and deleted forms do not produce external links', async ({ page }) => {
     await signIn(page, { viewer: true, deleted: true });
-    await expect(page.getByRole('link', { name: 'Abrir formulário', exact: true })).toHaveCount(0);
-    await expect(page.getByRole('link', { name: 'Criar formulário', exact: true })).toHaveCount(0);
+    await expect(page.getByRole('link', { name: 'Ver formulário feito', exact: true })).toHaveCount(0);
+    await expect(page.getByRole('link', { name: 'Preencher formulário', exact: true })).toHaveCount(0);
     await expect(page.getByText('Removido na plataforma de formulários', { exact: true })).toBeVisible();
 });

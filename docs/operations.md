@@ -18,8 +18,8 @@ alias artisan='sudo -u caderneta php /var/www/caderneta-sef/current/artisan'
 | --- | --- | --- |
 | `nginx` | HTTPS, arquivos estáticos, limite de tentativas de login | `systemctl status nginx` |
 | `php<versão>-fpm` | executa o Laravel (pool `caderneta-sef`) | `systemctl status 'php*-fpm'` |
-| `caderneta-queue.service` | fila: e-mails de lembrete | `systemctl status caderneta-queue` |
-| `caderneta-scheduler.timer` | a cada minuto: lembretes (15 min), limpeza de tokens, links de senha e falhas antigas | `systemctl list-timers caderneta-scheduler.timer` |
+| `caderneta-queue.service` | fila: e-mails de lembrete e sincronização com o Google Agenda | `systemctl status caderneta-queue` |
+| `caderneta-scheduler.timer` | a cada minuto: lembretes (15 min), leitura das agendas Google (5 min), limpeza de tokens, links de senha e falhas antigas | `systemctl list-timers caderneta-scheduler.timer` |
 | `certbot.timer` | renova o certificado HTTPS | `systemctl list-timers certbot.timer` |
 
 `https://<domínio>/up` responde 200 quando a aplicação sobe, sem revelar nada

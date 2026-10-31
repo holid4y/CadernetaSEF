@@ -6,6 +6,7 @@ namespace App\Http\Resources\Mobile;
 
 use App\Models\Appointment;
 use App\Models\Client;
+use App\Models\GoogleEvent;
 use App\Models\Service;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
@@ -15,7 +16,7 @@ use Illuminate\Http\Request;
 // The app replaces its whole state with this snapshot after every change.
 final class MobileState
 {
-    public const APPOINTMENT_RELATIONS = ['service:id,slug', 'documents', 'activities', 'externalForms'];
+    public const APPOINTMENT_RELATIONS = ['service:id,slug', 'documents', 'activities', 'externalForms', 'googleEventCopies', 'googleEvent'];
 
     /**
      * @return array<string, mixed>
@@ -41,6 +42,22 @@ final class MobileState
                 Service::query()->with(['category:id,slug', 'documents'])->orderBy('sort_order')->orderBy('id')->get(),
             )->resolve($request),
             'appointments' => AppointmentResource::collection($appointments)->resolve($request),
+            'google' => GoogleStatus::for($request->user()),
+            'googleEvents' => GoogleEvent::query()
+                ->pending()
+                ->with('account:id,user_id')
+                ->where('ends_at', '>', now()->subDays(7))
+                ->orderBy('starts_at')
+                ->get()
+                ->map(fn (GoogleEvent $event): array => [
+                    'id' => $event->id,
+                    'title' => $event->title,
+                    'location' => $event->location,
+                    'start' => $event->starts_at->getTimestampMs(),
+                    'end' => $event->ends_at->getTimestampMs(),
+                    'ownerId' => $event->account->user_id,
+                ])
+                ->all(),
             'counters' => (object) [],
             'meta' => ['serverTime' => now()->getTimestampMs()],
         ];

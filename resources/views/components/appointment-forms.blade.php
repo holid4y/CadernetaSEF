@@ -21,7 +21,7 @@
                     <p class="break-words font-semibold">{{ $form->title }}</p>
                     <p class="mt-1 text-sm text-ink-muted">{{ $form->statusLabel() }}</p>
                     @if ($openUrl)
-                        <a href="{{ $openUrl }}" target="_blank" rel="noopener noreferrer" class="press mt-2 inline-flex min-h-11 items-center rounded-full border border-line px-4 text-sm font-semibold text-primary">Abrir formulário</a>
+                        <a href="{{ $openUrl }}" target="_blank" rel="noopener noreferrer" class="press mt-2 inline-flex min-h-11 items-center rounded-full border border-line px-4 text-sm font-semibold text-primary">{{ $form->actionLabel() }}</a>
                     @endif
                     @if (! $openUrl && $form->status !== 'deleted')
                         <p class="mt-2 text-sm text-ink-muted">Link indisponível. Confira a configuração da integração.</p>
@@ -35,7 +35,7 @@
         @can('update', $appointment)
             <div class="mt-4 flex flex-wrap gap-2">
                 @if ($createUrl)
-                    <a href="{{ $createUrl }}" target="_blank" rel="noopener noreferrer" class="press inline-flex min-h-11 items-center rounded-full bg-primary px-4 text-sm font-semibold text-on-primary">Criar formulário</a>
+                    <a href="{{ $createUrl }}" target="_blank" rel="noopener noreferrer" class="press inline-flex min-h-11 items-center rounded-full bg-primary px-4 text-sm font-semibold text-on-primary">Preencher formulário</a>
                 @endif
                 <a href="{{ route('forms.review', ['atendimento' => $appointment->integration_id]) }}" wire:navigate class="press inline-flex min-h-11 items-center rounded-full border border-line px-4 text-sm font-semibold text-primary">Revisar vínculos pendentes</a>
             </div>

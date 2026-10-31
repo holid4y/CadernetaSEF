@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Domain\Appointments\Enums\ActivityType;
 use App\Domain\Appointments\Enums\AppointmentStatus;
 use App\Domain\Appointments\Enums\LocationType;
+use App\Jobs\SyncAppointmentToGoogle;
 use App\Support\DisplayTimezone;
 use Carbon\CarbonInterface;
 use Database\Factories\AppointmentFactory;
@@ -17,6 +18,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
@@ -30,11 +32,36 @@ class Appointment extends Model
     /** @use HasFactory<AppointmentFactory> */
     use HasFactory, SoftDeletes;
 
+    // What the copy in the responsible's Google calendar shows.
+    private const SHOWN_IN_GOOGLE = [
+        'client_id', 'service_id', 'responsible_user_id', 'starts_at', 'ends_at',
+        'status', 'location_type', 'location',
+    ];
+
     protected static function booted(): void
     {
         static::creating(function (Appointment $appointment): void {
             $appointment->integration_id = (string) Str::uuid();
         });
+
+        static::saved(function (Appointment $appointment): void {
+            if ($appointment->wasRecentlyCreated || $appointment->wasChanged(self::SHOWN_IN_GOOGLE)) {
+                SyncAppointmentToGoogle::dispatchFor($appointment);
+            }
+        });
+
+        static::deleted(fn (Appointment $appointment) => SyncAppointmentToGoogle::dispatchFor($appointment));
+        static::restored(fn (Appointment $appointment) => SyncAppointmentToGoogle::dispatchFor($appointment));
+    }
+
+    public function googleEventCopies(): HasMany
+    {
+        return $this->hasMany(GoogleEventCopy::class);
+    }
+
+    public function googleEvent(): HasOne
+    {
+        return $this->hasOne(GoogleEvent::class);
     }
 
     public function externalForms(): HasMany

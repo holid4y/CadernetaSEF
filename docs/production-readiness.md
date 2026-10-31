@@ -36,7 +36,7 @@ A EC2 ainda não tem a aplicação instalada.
 | CORS | padrão do framework: qualquer origem | só as origens dos apps |
 | Implantação | inexistente | scripts e configuração em `deploy/aws/`; não executados em servidor real |
 | Backups | sem procedimento | documentados; dump e restauração ensaiados na simulação |
-| Sincronização com Google Agenda (OAuth) | não implementado (fora do escopo) | sem mudança |
+| Sincronização com Google Agenda (OAuth) | não implementado (fora do escopo) | implementada e testada; depende do cliente OAuth no Google Cloud ([google-calendar.md](google-calendar.md)) |
 
 ## Critérios de aceite
 

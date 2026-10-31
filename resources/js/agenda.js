@@ -171,7 +171,10 @@ export function mountAgenda(element, navigate) {
         select: openCreateForm,
         eventClick: (info) => {
             info.jsEvent.preventDefault();
-            navigate(info.event.url);
+
+            if (info.event.url) {
+                navigate(info.event.url);
+            }
         },
         eventDrop: reschedule,
         eventResize: reschedule,

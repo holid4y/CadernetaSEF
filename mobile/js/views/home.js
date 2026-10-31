@@ -1,5 +1,6 @@
 import { PROJECT } from '../data.js';
 import { appointmentsInRange, appointmentsOnDay, can, pendingDocuments } from '../domain.js';
+import { GOOGLE_MARK } from '../google.js';
 import { openProfile } from '../profile.js';
 import { appointmentRow, avatar, emptyState, icon, logo } from '../ui.js';
 import { addDays, capitalize, dateLong, esc, firstName, relativeDay, startOfDay } from '../util.js';
@@ -25,6 +26,7 @@ export default function home({ state, user }) {
     }, {});
 
     const canCreate = can(user, 'appointments.write');
+    const waiting = canCreate ? (state.googleEvents ?? []).filter((event) => event.end > now).length : 0;
 
     return {
         html: `<header class="appbar">
@@ -45,6 +47,7 @@ export default function home({ state, user }) {
             </section>
 
             ${canCreate ? `<a class="btn btn-primary btn-block rise" style="margin-top:14px" href="#/atendimentos/novo">${icon('plus')}Novo atendimento</a>` : ''}
+            ${waiting ? `<a class="notice-google rise" href="#/agenda">${GOOGLE_MARK}<span>${waiting === 1 ? '1 evento do Google espera' : `${waiting} eventos do Google esperam`} atendido e serviço. Abra a agenda para completar.</span></a>` : ''}
 
             <div class="section-title"><h2>Atendimentos de hoje</h2></div>
             ${

@@ -35,21 +35,18 @@ final class SendAppointmentReminder
         }
 
         $appointment->refresh();
+        $reminder = new AppointmentReminder($appointment);
 
-        if (! $again) {
-            $appointment->client->notify(new AppointmentReminder($appointment));
-
-            return true;
-        }
-
+        // A reminder the queue never received has to stay unsent, or the
+        // scheduler would skip it for good.
         try {
-            $appointment->client->notifyNow(new AppointmentReminder($appointment));
+            $again ? $appointment->client->notifyNow($reminder) : $appointment->client->notify($reminder);
         } catch (Throwable $error) {
             Appointment::query()->whereKey($appointment->id)->update(['reminder_sent_at' => $previous]);
             $appointment->reminder_sent_at = $previous;
 
             // The mail server's answer may quote the address, so only its type is logged.
-            Log::warning('Appointment reminder was not accepted by the mail server.', [
+            Log::warning('Appointment reminder could not be sent.', [
                 'appointment_id' => $appointment->id,
                 'error' => $error::class,
             ]);

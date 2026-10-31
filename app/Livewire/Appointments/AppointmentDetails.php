@@ -108,7 +108,10 @@ class AppointmentDetails extends Component
 
     public function render(): View
     {
-        $this->appointment->load(['client', 'service.category', 'responsible', 'documents', 'activities.user', 'externalForms']);
+        $this->appointment->load([
+            'client', 'service.category', 'responsible', 'documents', 'activities.user', 'externalForms',
+            'googleEventCopies', 'googleEvent.account.user',
+        ]);
 
         return view('livewire.appointments.appointment-details', [
             'start' => DisplayTimezone::toLocal($this->appointment->starts_at),

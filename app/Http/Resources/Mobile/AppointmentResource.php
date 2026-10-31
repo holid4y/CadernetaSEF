@@ -9,6 +9,7 @@ use App\Models\Appointment;
 use App\Models\AppointmentActivity;
 use App\Models\AppointmentDocument;
 use App\Models\ExternalForm;
+use App\Models\User;
 use App\Support\FormLinks;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -45,6 +46,7 @@ class AppointmentResource extends JsonResource
             'integrationId' => $this->integration_id,
             'formsEnabled' => (bool) config('services.forms.enabled'),
             'formCreateUrl' => $canWrite ? FormLinks::create($this->resource) : null,
+            'google' => self::google($this->resource, $request->user()),
             'forms' => $this->externalForms->map(fn (ExternalForm $form): array => [
                 'title' => $form->title,
                 'status' => $form->status,
@@ -62,6 +64,29 @@ class AppointmentResource extends JsonResource
             'id' => $document->id,
             'name' => $document->name,
             'receivedAt' => $document->received_at?->getTimestampMs(),
+        ];
+    }
+
+    /**
+     * The link opens the copy in the person's own Google calendar; someone
+     * else's calendar would not open for them.
+     *
+     * @return array{link: ?string, fromGoogle: bool, removed: bool, error: ?string, googleStart: ?int, googleEnd: ?int}
+     */
+    private static function google(Appointment $appointment, ?User $user): array
+    {
+        $account = $user?->canWrite() ? $user->googleAccount : null;
+        $source = $appointment->googleEvent;
+        $copy = $account === null ? null : $appointment->googleEventCopies->firstWhere('google_account_id', $account->id);
+        $ownSource = $source !== null && $account !== null && $source->google_account_id === $account->id;
+
+        return [
+            'link' => $copy?->html_link ?? ($ownSource ? $source->html_link : null),
+            'fromGoogle' => $source !== null,
+            'removed' => $source?->removed_at !== null,
+            'error' => $source?->sync_error,
+            'googleStart' => $source?->starts_at->getTimestampMs(),
+            'googleEnd' => $source?->ends_at->getTimestampMs(),
         ];
     }
 

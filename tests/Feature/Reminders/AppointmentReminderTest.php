@@ -15,9 +15,11 @@ use App\Models\Service;
 use App\Models\User;
 use App\Notifications\AppointmentReminder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Notifications\ChannelManager;
 use Illuminate\Notifications\SendQueuedNotifications;
 use Illuminate\Support\Facades\Notification;
 use Livewire\Livewire;
+use Mockery\MockInterface;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -264,6 +266,17 @@ class AppointmentReminderTest extends TestCase
         $this->assertNull($appointment->fresh()->reminder_sent_at);
         $this->artisan('appointments:send-reminders');
         Notification::assertSentToTimes($appointment->client, AppointmentReminder::class, 2);
+    }
+
+    public function test_a_reminder_that_never_reached_the_queue_is_tried_again_later(): void
+    {
+        $appointment = $this->appointmentAt('2026-10-06 10:00');
+        $this->mock(ChannelManager::class, fn (MockInterface $mock) => $mock->shouldReceive('send')
+            ->once()->andThrow(new RuntimeException('could not reach the queue')));
+
+        $this->artisan('appointments:send-reminders')->assertSuccessful();
+
+        $this->assertNull($appointment->fresh()->reminder_sent_at);
     }
 
     public function test_the_reminder_command_is_scheduled(): void

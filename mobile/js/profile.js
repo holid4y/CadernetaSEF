@@ -1,5 +1,6 @@
 import { PROJECT, ROLES } from './data.js';
 import { can } from './domain.js';
+import { GOOGLE_MARK, openGoogle } from './google.js';
 import { navigate, refresh } from './router.js';
 import { store } from './store.js';
 import { getPreference, setPreference } from './theme.js';
@@ -39,6 +40,7 @@ export function openProfile() {
             <p class="hint-text" style="margin-top:6px">O visualizador só consulta: os botões de alteração somem e o sistema recusa qualquer mudança.</p>` : ''}
 
             <div class="menu">
+                ${store.state.google?.available ? `<button class="menu-item" type="button" id="google">${GOOGLE_MARK}<span>Google Agenda<small>${store.state.google.connected ? esc(store.state.google.email) : 'Conectar sua conta Google'}</small></span></button>` : ''}
                 ${!store.isDemo ? `<button class="menu-item" type="button" id="reload">${icon('refresh')}<span>Atualizar dados<small>Buscar as alterações da equipe no servidor</small></span></button>` : ''}
                 ${can(user, 'services.manage') ? `<a class="menu-item" href="#/servicos" data-dismiss>${icon('briefcase')}<span>Serviços e documentos<small>Demandas e listas do que levar</small></span></a>` : ''}
                 ${store.isDemo ? `<button class="menu-item" type="button" id="reset">${icon('refresh')}<span>Restaurar dados de demonstração<small>Volta ao início, com a agenda em torno de hoje</small></span></button>` : ''}
@@ -68,6 +70,11 @@ export function openProfile() {
                     refresh();
                 }),
             );
+
+            sheet.querySelector('#google')?.addEventListener('click', () => {
+                close();
+                openGoogle();
+            });
 
             sheet.querySelector('#reload')?.addEventListener('click', async (event) => {
                 event.currentTarget.disabled = true;

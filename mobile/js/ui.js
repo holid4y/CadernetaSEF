@@ -47,7 +47,7 @@ export const statusBadge = (status) => `<span class="badge tone-${STATUS[status]
 
 export const avatar = (name, size = '', tone = '') => `<span class="avatar ${size} ${tone}" aria-hidden="true">${esc(initials(name))}</span>`;
 
-export const backButton = (fallback) => `<button type="button" class="icon-btn" data-back="${fallback}" aria-label="Voltar">${icon('chev-l')}</button>`;
+export const backButton = (fallback) => `<button type="button" class="icon-btn" data-back="${esc(fallback)}" aria-label="Voltar">${icon('chev-l')}</button>`;
 
 export const emptyState = ({ icon: name = 'calendar', title, text = '', action = '' }) =>
     `<div class="empty">${icon(name)}<strong>${esc(title)}</strong>${text ? `<p>${esc(text)}</p>` : ''}${action}</div>`;

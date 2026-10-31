@@ -43,6 +43,7 @@ let state = config.mode === 'demo' ? load() : empty();
 let userId = config.mode === 'demo' ? Number(read(SESSION_KEY)) || null : null;
 let pending = false;
 let loadedAt = 0;
+let awaitingGoogle = false;
 const listeners = new Set();
 
 // The server refuses (409) a change made over data someone else has just
@@ -104,6 +105,7 @@ export const store = {
             if (!validState(response?.state)) throw new domain.ValidationError('Resposta inválida do servidor.');
             state = response.state;
             loadedAt = Date.now();
+            awaitingGoogle = false;
         } catch (error) {
             if (error.status === 401) {
                 state = empty();
@@ -114,6 +116,35 @@ export const store = {
         } finally {
             pending = false;
         }
+    },
+
+    // The Google connection has its own endpoints; their answers carry the new status.
+    async google(method, path = '', body) {
+        if (this.isDemo) throw new domain.ValidationError('A conexão com o Google só existe no app ligado ao servidor.');
+        try {
+            const response = await api.request(`/google${path}`, { method, body });
+            if (response?.google) {
+                state = { ...state, google: response.google };
+                listeners.forEach((listener) => listener());
+            }
+            return response;
+        } catch (error) {
+            if (error.status === 401) {
+                state = empty();
+                userId = null;
+                location.hash = '/login';
+            }
+            throw error;
+        }
+    },
+
+    // Set while the person authorises in the browser, so coming back reloads at once.
+    awaitGoogle() {
+        awaitingGoogle = true;
+    },
+
+    get awaitingGoogle() {
+        return awaitingGoogle;
     },
 
     async forgotPassword(email) {

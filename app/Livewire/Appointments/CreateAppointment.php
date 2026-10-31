@@ -7,9 +7,11 @@ namespace App\Livewire\Appointments;
 use App\Domain\Appointments\Actions\ScheduleAppointment;
 use App\Domain\Appointments\Enums\LocationType;
 use App\Domain\Clients\Queries\SearchClients;
+use App\Domain\Google\Actions\ImportGoogleEvent;
 use App\Livewire\Forms\ClientForm;
 use App\Models\Appointment;
 use App\Models\Client;
+use App\Models\GoogleEvent;
 use App\Models\Service;
 use App\Models\ServiceCategory;
 use App\Models\User;
@@ -27,6 +29,9 @@ class CreateAppointment extends Component
 {
     #[Locked]
     public ?int $client_id = null;
+
+    #[Locked]
+    public ?int $google_event_id = null;
 
     public string $client_search = '';
 
@@ -54,21 +59,44 @@ class CreateAppointment extends Component
 
     /**
      * @param  ?string  $start  local wall time from the agenda, e.g. 2026-10-05T14:00:00
+     * @param  ?int  $googleEventId  an event from Google waiting to be completed
      */
-    public function mount(?string $start = null, ?string $end = null, ?int $clientId = null): void
+    public function mount(?string $start = null, ?string $end = null, ?int $clientId = null, ?int $googleEventId = null): void
     {
-        $startsAt = $start ? Carbon::parse($start) : DisplayTimezone::toLocal(now())->addHour()->startOfHour();
-        $endsAt = $end ? Carbon::parse($end) : $startsAt->copy()->addHour();
+        $event = $googleEventId ? GoogleEvent::query()->pending()->with('account.user')->find($googleEventId) : null;
+
+        $startsAt = match (true) {
+            $event !== null => DisplayTimezone::toLocal($event->starts_at),
+            $start !== null => Carbon::parse($start),
+            default => DisplayTimezone::toLocal(now())->addHour()->startOfHour(),
+        };
+        $endsAt = match (true) {
+            $event !== null => DisplayTimezone::toLocal($event->ends_at),
+            $end !== null => Carbon::parse($end),
+            default => $startsAt->copy()->addHour(),
+        };
 
         $this->date = $startsAt->format('Y-m-d');
         $this->start_time = $startsAt->format('H:i');
         $this->end_time = $endsAt->format('H:i');
         $this->responsible_user_id = Auth::user()->canWrite() ? Auth::id() : null;
 
+        if ($event !== null) {
+            $this->google_event_id = $event->id;
+            $this->location = $event->location ?? '';
+            $this->responsible_user_id = $event->account->user->canWrite() ? $event->account->user_id : $this->responsible_user_id;
+        }
+
         // A link to an inactive or removed client opens the form without one.
         if ($clientId !== null && Client::query()->active()->whereKey($clientId)->exists()) {
             $this->selectClient($clientId);
         }
+    }
+
+    #[Computed]
+    public function googleEvent(): ?GoogleEvent
+    {
+        return $this->google_event_id ? GoogleEvent::query()->find($this->google_event_id) : null;
     }
 
     #[Computed]
@@ -173,7 +201,19 @@ class CreateAppointment extends Component
         $this->end_time = Carbon::createFromFormat('H:i', $value)->addMinutes(max($duration, 15))->format('H:i');
     }
 
-    public function save(ScheduleAppointment $schedule): void
+    public function dismissGoogleEvent(): void
+    {
+        $this->authorize('create', Appointment::class);
+
+        if ($this->googleEvent?->isPending()) {
+            $this->googleEvent->update(['dismissed_at' => now()]);
+        }
+
+        session()->flash('notice', __('google.flash.dismissed'));
+        $this->redirectRoute('agenda');
+    }
+
+    public function save(ScheduleAppointment $schedule, ImportGoogleEvent $import): void
     {
         $this->authorize('create', Appointment::class);
 
@@ -190,7 +230,7 @@ class CreateAppointment extends Component
             'notes' => ['nullable', 'string', 'max:2000'],
         ]);
 
-        $appointment = $schedule->handle(Auth::user(), [
+        $attributes = [
             'client_id' => $this->client_id,
             'service_id' => $this->service_id,
             'responsible_user_id' => $this->responsible_user_id,
@@ -200,7 +240,11 @@ class CreateAppointment extends Component
             'location_type' => $this->location_type ?: null,
             'location' => $this->location ?: null,
             'notes' => $this->notes ?: null,
-        ]);
+        ];
+
+        $appointment = $this->google_event_id === null
+            ? $schedule->handle(Auth::user(), $attributes)
+            : $import->handle(Auth::user(), $this->google_event_id, $attributes);
 
         session()->flash('notice', __('appointments.flash.scheduled'));
 

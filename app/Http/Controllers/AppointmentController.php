@@ -17,6 +17,7 @@ class AppointmentController extends Controller
             'start' => $this->wallTime($request, 'inicio'),
             'end' => $this->wallTime($request, 'fim'),
             'clientId' => $request->integer('atendido') ?: null,
+            'googleEventId' => $request->integer('google') ?: null,
         ]);
     }
 

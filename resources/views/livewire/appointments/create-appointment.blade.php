@@ -1,4 +1,25 @@
 <form wire:submit="save" class="space-y-6">
+    @if ($this->googleEvent)
+        <x-card class="space-y-3">
+            <div class="flex items-start gap-3">
+                <x-google-logo :size="24" class="mt-1" />
+                <div class="min-w-0">
+                    <p class="text-sm text-ink-muted">{{ __('google.from_google') }}</p>
+                    <p class="font-semibold break-words">{{ $this->googleEvent->title }}</p>
+                    @if ($this->googleEvent->location)
+                        <p class="text-sm break-words text-ink-muted">{{ $this->googleEvent->location }}</p>
+                    @endif
+                </div>
+            </div>
+            <p class="text-sm text-ink-muted">Data e horário vieram do Google. Escolha o atendido e o serviço para transformar o evento em atendimento. Se o horário mudar lá, muda aqui também.</p>
+            <x-input-error :messages="$errors->get('google_event')" />
+            <button type="button" wire:click="dismissGoogleEvent" wire:confirm="Tirar este evento da agenda da Caderneta? Ele continua no Google."
+                    class="press min-h-11 text-sm text-primary underline underline-offset-4">
+                Não é um atendimento
+            </button>
+        </x-card>
+    @endif
+
     <x-card class="space-y-4">
         <h2 class="text-2xl">{{ __('appointments.create.step_client') }}</h2>
 
