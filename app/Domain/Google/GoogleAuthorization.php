@@ -12,15 +12,15 @@ use Illuminate\Validation\ValidationException;
 
 final class GoogleAuthorization
 {
-    // The account e-mail, a calendar of its own for the copies, the list of
-    // calendars to choose from and reading the one chosen.
-    public const SCOPES = [
-        'openid',
-        'email',
+    // A calendar of its own for the copies, the list of calendars to choose
+    // from and reading the one chosen. The person can uncheck any of them.
+    public const CALENDAR_SCOPES = [
         'https://www.googleapis.com/auth/calendar.app.created',
         'https://www.googleapis.com/auth/calendar.calendarlist.readonly',
         'https://www.googleapis.com/auth/calendar.events.readonly',
     ];
+
+    public const SCOPES = ['openid', 'email', ...self::CALENDAR_SCOPES];
 
     private const AUTHORIZE_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
 
@@ -61,9 +61,11 @@ final class GoogleAuthorization
             'redirect_uri' => route('google.callback'),
         ]);
 
-        // The ID token came straight from Google over TLS, so its claims can be read as they are.
+        // The ID token came straight from Google over TLS, so its claims can be
+        // read as they are. Google names the e-mail scope in its long form, so
+        // only the calendar ones are compared.
         $claims = json_decode(base64_decode(strtr(explode('.', (string) $response->json('id_token'))[1] ?? '', '-_', '+/')), true);
-        $missing = array_diff(self::SCOPES, explode(' ', (string) $response->json('scope')));
+        $missing = array_diff(self::CALENDAR_SCOPES, explode(' ', (string) $response->json('scope')));
         $email = is_array($claims) && ($claims['email_verified'] ?? false) === true ? ($claims['email'] ?? null) : null;
 
         if ($missing !== [] || ! is_string($email) || ! filled($response->json('refresh_token'))) {

@@ -144,7 +144,7 @@ class GoogleConnectionTest extends TestCase
     public function test_a_permission_left_unchecked_is_refused_and_the_grant_revoked(): void
     {
         $this->actingAs(User::factory()->create())->get(route('google.connect'));
-        $this->fakeTokens('ana.google@gmail.com', scopes: array_slice(GoogleAuthorization::SCOPES, 0, 3));
+        $this->fakeTokens('ana.google@gmail.com', scopes: 'openid https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/calendar.app.created');
 
         $this->get(route('google.callback', ['state' => session('google.authorization')['state'], 'code' => 'the-code']))
             ->assertSessionHasErrors(['google' => __('google.errors.permissions')]);
@@ -250,7 +250,11 @@ class GoogleConnectionTest extends TestCase
     /**
      * @param  list<string>  $scopes
      */
-    private function fakeTokens(string $email, array $scopes = GoogleAuthorization::SCOPES): void
+    // Google answers with the long form of "email" and in its own order.
+    private const GRANTED = 'https://www.googleapis.com/auth/calendar.events.readonly https://www.googleapis.com/auth/calendar.calendarlist.readonly '
+        .'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/calendar.app.created openid';
+
+    private function fakeTokens(string $email, ?string $scopes = self::GRANTED): void
     {
         $claims = rtrim(strtr(base64_encode(json_encode(['email' => $email, 'email_verified' => true])), '+/', '-_'), '=');
 
@@ -259,7 +263,7 @@ class GoogleConnectionTest extends TestCase
                 'access_token' => 'access-token',
                 'refresh_token' => 'refresh-token',
                 'expires_in' => 3599,
-                'scope' => implode(' ', $scopes),
+                'scope' => $scopes,
                 'id_token' => "header.{$claims}.signature",
             ]),
             'https://oauth2.googleapis.com/revoke' => Http::response(),
