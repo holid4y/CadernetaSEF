@@ -8,11 +8,21 @@
                     @if ($google && $google['account'] === null)
                         <x-google-button :href="route('google.connect')">{{ __('google.continue') }}</x-google-button>
                     @elseif ($google)
-                        <a href="{{ App\Domain\Google\GoogleCalendar::WEB_URL }}" target="_blank" rel="noopener noreferrer" class="google-button press">
-                            <span class="google-button__mark"><x-google-logo /></span>
-                            <span>{{ __('google.open') }}</span>
-                        </a>
-                        <x-button-link :href="route('google.show')" variant="secondary">{{ __('google.title') }}</x-button-link>
+                        <x-dropdown width="w-60">
+                            <x-slot name="trigger">
+                                <button type="button" class="google-button press" aria-haspopup="menu">
+                                    <span class="google-button__mark"><x-google-logo /></span>
+                                    <span>{{ __('google.title') }}</span>
+                                    <svg class="size-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                    </svg>
+                                </button>
+                            </x-slot>
+                            <x-slot name="content">
+                                <x-dropdown-link :href="App\Domain\Google\GoogleCalendar::WEB_URL" target="_blank" rel="noopener noreferrer">{{ __('google.open') }}</x-dropdown-link>
+                                <x-dropdown-link :href="route('google.show')" wire:navigate>Configurar conexão</x-dropdown-link>
+                            </x-slot>
+                        </x-dropdown>
                     @endif
                     <x-button-link :href="route('appointments.create')">{{ __('agenda.new') }}</x-button-link>
                 </x-slot>
