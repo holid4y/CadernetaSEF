@@ -23,6 +23,8 @@ Route::get('/', function () {
         : redirect()->route('login');
 })->name('home');
 
+Route::view('/privacidade', 'privacy')->name('privacy');
+
 Route::middleware(['signed', 'throttle:20,1,reminder-response'])->controller(ReminderResponseController::class)->group(function () {
     Route::get('/confirmacao/{appointment}', 'show')->name('appointments.respond');
     Route::post('/confirmacao/{appointment}', 'store');

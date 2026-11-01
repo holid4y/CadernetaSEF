@@ -48,6 +48,11 @@ class GoogleConnectionTest extends TestCase
         $this->assertSame(rtrim(strtr(base64_encode(hash('sha256', $pending['verifier'], true)), '+/', '-_'), '='), $query['code_challenge']);
     }
 
+    public function test_the_privacy_policy_google_asks_for_is_public(): void
+    {
+        $this->get(route('privacy'))->assertOk()->assertSee('Política de privacidade')->assertSee('uso limitado');
+    }
+
     public function test_viewers_can_not_connect(): void
     {
         $this->actingAs(User::factory()->viewer()->create());
