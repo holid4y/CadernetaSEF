@@ -22,9 +22,9 @@ A EC2 ainda não tem a aplicação instalada.
 | --- | --- | --- |
 | Login, sessão, recuperação de senha (web) | implementado e validado | sem mudança de comportamento; o login passou a usar a mesma verificação da API |
 | Agenda, atendidos, agendamentos, histórico, reagendamento, cancelamento, checklist | implementado e validado, com uma falha de concorrência na mudança de status | corrigido (lock na linha) e coberto por teste com processos paralelos |
-| Catálogo de serviços | implementado e validado | também gerido pelo app (só admin) |
-| Painel inicial (web) | parcial: hoje, semana, confirmados, concluídos no mês | sem mudança |
-| Painel de impacto, relatórios e CSV (web, M5) | não implementado na web; no app, calculado no aparelho | pendente |
+| Catálogo de serviços | implementado e validado | também gerido pelo app (só admin); excluir tira do catálogo sem perder o histórico |
+| Painel inicial (web) | parcial: hoje, semana, confirmados, documentos pendentes | “documentos pendentes” deu lugar a “concluídos no mês”: os documentos são conferidos no dia |
+| Painel de impacto, relatórios e CSV (web, M5) | não implementado na web; no app, calculado no aparelho | implementado na web, com os mesmos números do app; filtro por tipo de atendido (PF, PJ, ONG) e CSV |
 | Administração de usuários | sem tela; só `tinker` | comandos `users:create`, `users:deactivate`, `users:password`; tela web pendente |
 | Lembretes e fila | implementado e validado; sem SMTP de produção | envio manual síncrono e honesto, reconferência no job, interruptor `MAIL_REMINDERS_ENABLED`; envio real bloqueado (credenciais e aprovação) |
 | Integração de formulários | implementada e validada | preservada; conexão com o parceiro bloqueada (depende do outro grupo) |

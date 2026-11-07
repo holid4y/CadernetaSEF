@@ -89,6 +89,19 @@ colunas; até 1000 atendidos por arquivo.
   lembretes até alguém completar o cadastro. Lembretes também começam
   desligados para todos os importados: a planilha não registra consentimento.
 
+## Regras do dia a dia
+
+- **Catálogo:** desativar um serviço o tira dos novos agendamentos e dá para
+  reativar depois. Excluir (só administradores) o tira do catálogo de vez; os
+  atendimentos antigos, o histórico e o Impacto continuam com o nome dele. A
+  exclusão é recusada enquanto houver atendimento agendado, confirmado ou em
+  andamento com o serviço.
+- **Documentos:** a pessoa traz os documentos no dia; a lista só pode ser
+  marcada a partir do dia do atendimento.
+- **Tipos de atendido:** pessoa física (CPF), pessoa jurídica e ONG (CNPJ). O
+  Impacto conta terceiro setor pelas ONGs e filtra por tipo, inclusive no CSV.
+- **Local:** atendimentos na universidade começam com “Sala 105, Campus II”.
+
 ## Contas
 
 Não há cadastro público nem tela de administração de usuários: as contas são

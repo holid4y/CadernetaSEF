@@ -141,7 +141,7 @@ class ClientImportTest extends TestCase
     }
 
     /**
-     * Builds a minimal .xlsx (one sheet, inline strings) without any package.
+     * Builds a minimal .xlsx (one sheet, inline strings and numbers) without any package.
      *
      * @param  list<list<string|int|float>>  $rows
      */

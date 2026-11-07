@@ -15,7 +15,7 @@ use ZipArchive;
  */
 final class SpreadsheetReader
 {
-    // A 10 MB upload can unpack into gigabytes of XML.
+    // Even a small upload can unpack into gigabytes of XML.
     private const MAX_XML_BYTES = 30_000_000;
 
     /**

@@ -212,7 +212,7 @@ export function toggleDocument(state, actor, appointmentId, documentId, now = Da
 export const reminderBlocker = (client) => {
     if (!client.active) return 'Este atendido está inativo.';
     if (!client.acceptsReminders) return 'O atendido não autorizou lembretes.';
-    if (!client.email) return 'Sem e-mail cadastrado; use o WhatsApp.';
+    if (!client.email) return 'Cadastre um e-mail válido para o lembrete automático, ou use o WhatsApp.';
     if (!isEmail(client.email)) return 'Cadastre um e-mail válido para enviar o lembrete.';
     return null;
 };

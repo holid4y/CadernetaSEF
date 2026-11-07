@@ -214,7 +214,7 @@ test('reminders need consent and an e-mail', () => {
     assert.throws(() => sendReminder(state, admin, noEmail.id, NOW), /não autorizou/);
 
     state.clients[1].acceptsReminders = true;
-    assert.throws(() => sendReminder(state, admin, noEmail.id, NOW), /Sem e-mail/);
+    assert.throws(() => sendReminder(state, admin, noEmail.id, NOW), /Cadastre um e-mail/);
 });
 
 test('client history lists only that client, newest first, with disabled services', () => {
