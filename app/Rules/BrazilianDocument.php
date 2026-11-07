@@ -17,13 +17,12 @@ final class BrazilianDocument implements ValidationRule
 
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        $valid = match ($this->type) {
-            ClientType::Individual => self::isCpf(preg_replace('/\D/', '', (string) $value)),
-            ClientType::Organization => self::isCnpj(self::characters((string) $value)),
-        };
+        $valid = $this->type->isLegalEntity()
+            ? self::isCnpj(self::characters((string) $value))
+            : self::isCpf(preg_replace('/\D/', '', (string) $value));
 
         if (! $valid) {
-            $fail(__("clients.errors.invalid_{$this->type->value}_document"));
+            $fail(__($this->type->isLegalEntity() ? 'clients.errors.invalid_organization_document' : 'clients.errors.invalid_individual_document'));
         }
     }
 

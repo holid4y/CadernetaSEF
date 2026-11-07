@@ -7,12 +7,14 @@ import {
     can,
     changeStatus,
     clientAppointments,
+    deleteService,
     findConflict,
     rescheduleAppointment,
     saveClient,
     scheduleAppointment,
     searchClients,
     sendReminder,
+    serviceOf,
     toggleDocument,
     ValidationError,
 } from '../js/domain.js';
@@ -173,15 +175,33 @@ test('rescheduling keeps history and validates conflicts against others only', (
     assert.throws(() => rescheduleAppointment(state, admin, first.id, { ...slot('14:00', '15:00'), responsibleId: 2 }, NOW), /agendados ou confirmados/);
 });
 
-test('marking a document records when it was delivered', () => {
+test('documents are checked on the day the person brings them', () => {
     const { state, admin } = fresh();
     const appointment = scheduleAppointment(state, admin, input(state), NOW);
     const [document] = appointment.documents;
+    const morning = at(DAY, '08:00');
 
-    toggleDocument(state, admin, appointment.id, document.id, NOW);
-    assert.equal(document.receivedAt, NOW);
-    toggleDocument(state, admin, appointment.id, document.id, NOW);
+    assert.throws(() => toggleDocument(state, admin, appointment.id, document.id, NOW), /no dia do atendimento/);
+    toggleDocument(state, admin, appointment.id, document.id, morning);
+    assert.equal(document.receivedAt, morning);
+    toggleDocument(state, admin, appointment.id, document.id, morning);
     assert.equal(document.receivedAt, null);
+});
+
+test('a service with appointments ahead stays; without them it leaves the catalog', () => {
+    const { state, admin, team } = fresh();
+    scheduleAppointment(state, admin, input(state), NOW);
+
+    assert.throws(() => deleteService(state, team, 'irpf', NOW), /permissão/);
+    assert.throws(() => deleteService(state, admin, 'irpf', NOW), /Remarque ou cancele/);
+
+    state.appointments
+        .filter((a) => a.serviceSlug === 'irpf' && a.end > NOW)
+        .forEach((a) => (a.status = 'cancelled'));
+    deleteService(state, admin, 'irpf', NOW);
+
+    assert.equal(serviceOf(state, 'irpf').deleted, true);
+    assert.throws(() => scheduleAppointment(state, admin, input(state, slot('13:00', '14:00')), NOW), /excluído do catálogo/);
 });
 
 test('reminders need consent and an e-mail', () => {

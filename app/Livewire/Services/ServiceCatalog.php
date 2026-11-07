@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\Services;
 
+use App\Domain\Services\Actions\DeleteService;
 use App\Domain\Services\Actions\SaveService;
 use App\Models\Service;
 use App\Models\ServiceCategory;
@@ -137,6 +138,18 @@ class ServiceCatalog extends Component
         ], $this->documents);
 
         $this->message = __($service ? 'services.flash.updated' : 'services.flash.created', ['name' => $saved->name]);
+        $this->resetForm();
+        unset($this->categories);
+    }
+
+    public function delete(DeleteService $delete): void
+    {
+        $service = Service::query()->findOrFail($this->service_id);
+        $this->authorize('delete', $service);
+
+        $delete->handle($service);
+
+        $this->message = __('services.flash.deleted', ['name' => $service->name]);
         $this->resetForm();
         unset($this->categories);
     }

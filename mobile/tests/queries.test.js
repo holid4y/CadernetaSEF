@@ -11,7 +11,6 @@ import {
     indicatorsCsv,
     meiCount,
     peopleByMonth,
-    thirdSectorCount,
     toCsv,
     topDemands,
     uniqueClientsServed,
@@ -36,7 +35,7 @@ const known = () => {
         return a;
     };
 
-    // clients: 1 Joana (PF), 3 Teresa (PJ, MEI), 4 ACVN (PJ, ONG)
+    // clients: 1 Joana (PF), 3 Teresa (PJ, MEI), 4 ACVN (ONG)
     book(1, 'irpf', '2026-09-10', '09:00', 'completed');
     book(1, 'irpf', '2026-09-24', '09:00', 'completed'); // same person, same month
     book(3, 'atendimento-mei', '2026-09-11', '10:00', 'completed');
@@ -68,9 +67,8 @@ test('composition indicators ignore cancelled appointments', () => {
     const list = state.appointments;
 
     // Not cancelled: Joana x2, Teresa x2, ACVN x2.
-    assert.deepEqual(byClientType(state, list), { individual: 2, organization: 4 });
+    assert.deepEqual(byClientType(state, list), { individual: 2, organization: 2, ngo: 2 });
     assert.equal(meiCount(list), 2);
-    assert.equal(thirdSectorCount(state, list), 2);
 });
 
 test('top demands and responsibles are ranked', () => {
@@ -98,6 +96,15 @@ test('the indicators bundle respects the period filter', () => {
     assert.equal(all.total, 7);
     assert.equal(october.total, 4);
     assert.equal(october.status.completed, 1);
+});
+
+test('the indicators can be narrowed to one type of client', () => {
+    const state = known();
+    const ngos = indicators(state, PERIOD, 'ngo');
+
+    assert.deepEqual([ngos.total, ngos.individuals, ngos.organizations, ngos.ngos, ngos.mei], [2, 0, 0, 2, 0]);
+    assert.equal(indicators(state, PERIOD).ngos, 2);
+    assert.match(indicatorsCsv(state, PERIOD, { period: 'set–out/2026', status: {} }, 'ngo'), /"Atendidos";"ONG"\r\n"Total de atendimentos";"2"/);
 });
 
 test('CSV export has the headline numbers and escapes quotes', () => {

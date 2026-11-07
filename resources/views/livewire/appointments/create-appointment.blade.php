@@ -114,7 +114,7 @@
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_2fr]">
             <div>
                 <x-input-label for="location_type" :value="__('appointments.fields.location_type')" />
-                <x-select-input id="location_type" wire:model="location_type" class="mt-1 block w-full">
+                <x-select-input id="location_type" wire:model.live="location_type" class="mt-1 block w-full">
                     @foreach ($locationTypes as $type)
                         <option value="{{ $type->value }}">{{ $type->label() }}</option>
                     @endforeach

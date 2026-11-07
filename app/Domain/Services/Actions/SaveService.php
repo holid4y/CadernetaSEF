@@ -59,7 +59,7 @@ final class SaveService
         $base = Str::slug($name);
         $slug = $base;
 
-        for ($suffix = 2; Service::query()->where('slug', $slug)->exists(); $suffix++) {
+        for ($suffix = 2; Service::withTrashed()->where('slug', $slug)->exists(); $suffix++) {
             $slug = "{$base}-{$suffix}";
         }
 

@@ -22,11 +22,11 @@ class DemoAgendaSeeder extends Seeder
         ['individual', 'Joana Lima', null, null, '(51) 99812-4410', 'joana.lima@example.com'],
         ['individual', 'Carlos Eduardo Souza', null, null, '(51) 99701-2280', null],
         ['organization', 'Teresa Alves Doces', 'Doces da Vó Teresa', '45.123.987/0001-70', '(51) 98455-0192', 'contato@docesdavo.example.com'],
-        ['organization', 'Associação Comunitária Vila Nova', 'ACVN', null, '(51) 3595-2211', 'acvn@example.org'],
+        ['ngo', 'Associação Comunitária Vila Nova', 'ACVN', null, '(51) 3595-2211', 'acvn@example.org'],
         ['individual', 'Marcos Pereira', null, null, '(51) 99633-8814', 'marcos.p@example.com'],
         ['organization', 'Oficina do Beto Reparos', 'Oficina do Beto', null, '(51) 98122-7765', null],
         ['individual', 'Luciana Ferreira', null, null, '(51) 99277-3301', 'lu.ferreira@example.com'],
-        ['organization', 'Instituto Mãos que Ajudam', 'Mãos que Ajudam', null, '(51) 3587-4400', 'contato@maos.example.org'],
+        ['ngo', 'Instituto Mãos que Ajudam', 'Mãos que Ajudam', null, '(51) 3587-4400', 'contato@maos.example.org'],
     ];
 
     /**
@@ -89,11 +89,15 @@ class DemoAgendaSeeder extends Seeder
                 'starts_at' => $startsAt->copy()->utc(),
                 'ends_at' => $startsAt->copy()->addMinutes($minutes)->utc(),
                 'location_type' => $serviceSlug === 'atendimento-externo' ? LocationType::External : LocationType::OnCampus,
-                'location' => $serviceSlug === 'atendimento-externo' ? 'Sala do Empreendedor' : 'Sala 205, prédio Azul',
+                'location' => $serviceSlug === 'atendimento-externo' ? 'Sala do Empreendedor' : LocationType::DEFAULT_PLACE,
             ]);
 
             foreach (self::STEPS_TO[$status->value] as $next) {
                 $changeStatus->handle($team[$responsible], $appointment, $next);
+            }
+
+            if (! $appointment->documentsAreDue()) {
+                continue;
             }
 
             $appointment->documents()

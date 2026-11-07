@@ -1,5 +1,5 @@
 import { emailLink, whatsappLink } from '../contacts.js';
-import { CLIENT_TYPES } from '../data.js';
+import { CLIENT_TYPES, isLegalEntity } from '../data.js';
 import { can, clientAppointments, clientOf, searchClients, ValidationError } from '../domain.js';
 import { navigate } from '../router.js';
 import { store } from '../store.js';
@@ -7,12 +7,13 @@ import { appointmentRow, avatar, backButton, emptyState, icon, toast } from '../
 import { openProfile } from '../profile.js';
 import { dateFull, dialNumber, esc, formatDocument, formatPhone, maskDocument, plural } from '../util.js';
 
-const typeIcon = (type) => icon(type === 'organization' ? 'building' : 'user');
+const typeIcon = (type) => icon({ organization: 'building', ngo: 'users' }[type] ?? 'user');
+const typeTone = (type) => ({ organization: 'tone-ochre', ngo: 'tone-moss' })[type] ?? 'tone-primary';
 
 const clientRow = (state, client) => {
     const total = clientAppointments(state, client.id).length;
     return `<a class="row is-client" href="#/atendidos/${client.id}">
-        ${avatar(client.name, '', client.type === 'organization' ? 'tone-ochre' : 'tone-primary')}
+        ${avatar(client.name, '', typeTone(client.type))}
         <div class="row-main">
             <span class="row-title">${esc(client.name)}</span>
             <span class="row-sub">${esc(client.tradeName ?? CLIENT_TYPES[client.type])}${client.phone ? ` · ${esc(client.phone)}` : ''}</span>
@@ -57,7 +58,7 @@ export function clientList({ state, user }) {
             </div>
 
             <div class="seg" role="group" aria-label="Tipo de atendido" style="margin:12px 0 16px">
-                ${[[null, 'Todos'], ['individual', 'Pessoa física'], ['organization', 'Pessoa jurídica']].map(([value, text]) => `<button type="button" data-type="${value ?? ''}" aria-pressed="${filter.type === value}">${text}</button>`).join('')}
+                ${[[null, 'Todos'], ...Object.entries(CLIENT_TYPES)].map(([value, text]) => `<button type="button" data-type="${value ?? ''}" aria-pressed="${filter.type === value}">${text}</button>`).join('')}
             </div>
 
             <div id="results" aria-live="polite">${results(filter.term, filter.type)}</div>`,
@@ -101,7 +102,7 @@ export function clientDetail({ params, state, user }) {
 
             <section class="banner rise">
                 <div style="display:flex;gap:14px;align-items:center">
-                    ${avatar(client.name, 'is-lg', client.type === 'organization' ? 'tone-ochre' : 'tone-primary')}
+                    ${avatar(client.name, 'is-lg', typeTone(client.type))}
                     <div style="min-width:0">
                         <span class="badge is-neutral is-plain">${typeIcon(client.type)}${CLIENT_TYPES[client.type]}${client.active ? '' : ' · Inativo'}</span>
                     </div>
@@ -119,7 +120,7 @@ export function clientDetail({ params, state, user }) {
             <section class="card rise" style="margin-top:12px">
                 <dl class="kv">
                     <div><dt>Telefone</dt><dd>${esc(client.phone ?? '—')}</dd></div>
-                    <div><dt>${client.type === 'organization' ? 'CNPJ' : 'CPF'}</dt><dd>${client.document ? esc(formatDocument(client.document)) : '—'}</dd></div>
+                    <div><dt>${isLegalEntity(client.type) ? 'CNPJ' : 'CPF'}</dt><dd>${client.document ? esc(formatDocument(client.document)) : '—'}</dd></div>
                     <div class="wide"><dt>E-mail</dt><dd style="overflow-wrap:anywhere">${esc(client.email ?? '—')}</dd></div>
                     <div class="wide"><dt>Lembretes</dt><dd>${client.acceptsReminders ? `Autorizou em ${dateFull(client.consentAt)}` : 'Não autorizou lembretes'}</dd></div>
                     ${client.notes ? `<div class="wide"><dt>Observações</dt><dd>${esc(client.notes)}</dd></div>` : ''}
@@ -167,11 +168,11 @@ export function clientFormBody(client = null, { compact = false } = {}) {
             </div>
         </div>
         <div class="field">
-            <label for="name" id="name-label">${type === 'organization' ? 'Razão social' : 'Nome completo'}</label>
+            <label for="name" id="name-label">${isLegalEntity(type) ? 'Razão social' : 'Nome completo'}</label>
             <input class="input" id="name" name="name" autocomplete="off" value="${esc(client?.name ?? '')}" required>
             <span class="field-error" data-error="name" hidden></span>
         </div>
-        <div class="field" id="trade-field" ${type === 'organization' ? '' : 'hidden'}>
+        <div class="field" id="trade-field" ${isLegalEntity(type) ? '' : 'hidden'}>
             <label for="tradeName">Nome fantasia <span class="opt">(opcional)</span></label>
             <input class="input" id="tradeName" name="tradeName" autocomplete="off" value="${esc(client?.tradeName ?? '')}">
         </div>
@@ -189,8 +190,8 @@ export function clientFormBody(client = null, { compact = false } = {}) {
             compact
                 ? ''
                 : `<div class="field">
-            <label for="document" id="doc-label">${type === 'organization' ? 'CNPJ' : 'CPF'} <span class="opt">(opcional)</span></label>
-            <input class="input" id="document" name="document" inputmode="${type === 'organization' ? 'text' : 'numeric'}" autocapitalize="characters" autocomplete="off" value="${esc(client?.document ? formatDocument(client.document) : '')}">
+            <label for="document" id="doc-label">${isLegalEntity(type) ? 'CNPJ' : 'CPF'} <span class="opt">(opcional)</span></label>
+            <input class="input" id="document" name="document" inputmode="${isLegalEntity(type) ? 'text' : 'numeric'}" autocapitalize="characters" autocomplete="off" value="${esc(client?.document ? formatDocument(client.document) : '')}">
             <span class="field-error" data-error="document" hidden></span>
         </div>
         <div class="field">
@@ -213,7 +214,7 @@ export function mountClientForm(root, client, onSaved) {
     let type = client?.type ?? 'individual';
 
     const syncType = () => {
-        const org = type === 'organization';
+        const org = isLegalEntity(type);
         root.querySelectorAll('[data-client-type]').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.clientType === type)));
         root.querySelector('#name-label').textContent = org ? 'Razão social' : 'Nome completo';
         root.querySelector('#trade-field').hidden = !org;

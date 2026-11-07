@@ -11,26 +11,27 @@ use App\Support\DisplayTimezone;
 use Carbon\CarbonInterface;
 use Closure;
 use Collator;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
 // The same numbers as the Impact tab of the app (mobile/js/queries.js).
-// Person type, MEI, third sector, demands and responsibles leave cancelled
-// appointments out; people served counts completed appointments only.
+// Person type, MEI, demands and responsibles leave cancelled appointments
+// out; people served counts completed appointments only. NGOs are the third
+// sector, so the report counts them by the type of the client.
 final class ImpactIndicators
 {
     public const MEI_SERVICE = 'atendimento-mei';
 
-    public const THIRD_SECTOR_CATEGORY = 'terceiro-setor';
-
     /**
      * @return array<string, mixed>
      */
-    public static function between(CarbonInterface $from, CarbonInterface $to): array
+    public static function between(CarbonInterface $from, CarbonInterface $to, ?ClientType $type = null): array
     {
         $list = Appointment::query()
-            ->with(['client:id,type', 'service:id,slug,name,service_category_id', 'service.category:id,slug', 'responsible:id,name'])
+            ->with(['client:id,type', 'service:id,slug,name', 'responsible:id,name'])
             ->where('starts_at', '>=', $from)
             ->where('starts_at', '<', $to)
+            ->when($type, fn (Builder $query, ClientType $type) => $query->whereRelation('client', 'type', $type->value))
             ->get();
 
         $active = $list->reject(fn (Appointment $appointment): bool => $appointment->status === AppointmentStatus::Cancelled);
@@ -46,8 +47,8 @@ final class ImpactIndicators
             'unique_clients' => $completed->pluck('client_id')->unique()->count(),
             'individuals' => $active->filter(fn (Appointment $appointment): bool => $appointment->client->type === ClientType::Individual)->count(),
             'organizations' => $active->filter(fn (Appointment $appointment): bool => $appointment->client->type === ClientType::Organization)->count(),
+            'ngos' => $active->filter(fn (Appointment $appointment): bool => $appointment->client->type === ClientType::Ngo)->count(),
             'mei' => $active->filter(fn (Appointment $appointment): bool => $appointment->service->slug === self::MEI_SERVICE)->count(),
-            'third_sector' => $active->filter(fn (Appointment $appointment): bool => $appointment->service->category->slug === self::THIRD_SECTOR_CATEGORY)->count(),
             'demands' => self::ranking($active, fn (Appointment $appointment): string => $appointment->service->name),
             'by_responsible' => self::ranking($active, fn (Appointment $appointment): string => $appointment->responsible->name),
             'people_by_month' => self::peopleByMonth($completed, $from, $to),

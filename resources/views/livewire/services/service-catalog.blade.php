@@ -112,7 +112,15 @@
                         <x-input-error :messages="array_merge($errors->get('new_document'), $errors->get('documents'), Arr::flatten($errors->get('documents.*')))" class="mt-2" />
                     </fieldset>
 
+                    <x-input-error :messages="$errors->get('service')" />
+
                     <div class="flex flex-col-reverse gap-3 border-t border-line pt-5 sm:flex-row sm:justify-end">
+                        @if ($service_id)
+                            <button type="button" wire:click="delete" wire:confirm="{{ __('services.confirm_delete') }}" wire:loading.attr="disabled" wire:target="delete"
+                                    class="press inline-flex min-h-11 items-center justify-center rounded-full px-5 text-sm font-semibold text-danger hover:bg-danger-soft sm:me-auto">
+                                {{ __('services.delete') }}
+                            </button>
+                        @endif
                         <x-secondary-button wire:click="cancel">{{ __('services.cancel') }}</x-secondary-button>
                         <x-primary-button wire:loading.attr="disabled" wire:target="save">{{ __('services.save') }}</x-primary-button>
                     </div>

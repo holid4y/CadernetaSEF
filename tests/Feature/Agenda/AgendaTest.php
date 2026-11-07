@@ -27,6 +27,13 @@ class AgendaTest extends TestCase
             ->assertDontSee('Novo atendimento');
     }
 
+    public function test_cancelled_appointments_show_up_unless_unticked(): void
+    {
+        $this->actingAs(User::factory()->create())
+            ->get('/agenda')
+            ->assertSee('data-agenda-filter="cancelled" checked', escape: false);
+    }
+
     public function test_the_page_tells_the_calendar_which_timezone_is_today(): void
     {
         $this->actingAs(User::factory()->create())

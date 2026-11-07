@@ -23,7 +23,6 @@ final class AgendaAppointments
     ): Collection {
         return Appointment::query()
             ->with(['client', 'service', 'responsible'])
-            ->withPendingDocumentsCount()
             ->overlapping($from, $to)
             ->when($responsibleId, fn (Builder $query) => $query->where('responsible_user_id', $responsibleId))
             ->unless($includeCancelled, fn (Builder $query) => $query->whereNotIn('status', [

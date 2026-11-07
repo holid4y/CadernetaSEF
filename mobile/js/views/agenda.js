@@ -25,7 +25,7 @@ import { openProfile } from '../profile.js';
 import { avatar } from '../ui.js';
 
 // Kept between visits so coming back from an appointment lands on the same day.
-const view = { mode: 'week', selected: startOfDay(Date.now()), responsibleId: null, showClosed: false };
+const view = { mode: 'week', selected: startOfDay(Date.now()), responsibleId: null, showClosed: true };
 
 // Moving a month lands on today when it is the current month.
 const MOVES = {
@@ -41,7 +41,7 @@ const FIRST_HOUR = 7;
 const LAST_HOUR = 21;
 const HOUR_PX = 64;
 
-const filtersActive = () => view.responsibleId !== null || view.showClosed;
+const filtersActive = () => view.responsibleId !== null || !view.showClosed;
 
 const rangeLabel = (from, to) => {
     const a = new Date(from);
@@ -259,7 +259,7 @@ function openFilters(state) {
                         ${responsibles(state).map((u) => `<option value="${u.id}" ${view.responsibleId === u.id ? 'selected' : ''}>${esc(u.name)}</option>`).join('')}
                     </select>
                 </div>
-                <label class="toggle-row"><input type="checkbox" name="closed" ${view.showClosed ? 'checked' : ''}><span>Mostrar cancelados e faltas<small>Por padrão eles ficam escondidos da agenda.</small></span></label>
+                <label class="toggle-row"><input type="checkbox" name="closed" ${view.showClosed ? 'checked' : ''}><span>Mostrar cancelados e faltas<small>Cancelados aparecem em vermelho; desmarque para escondê-los.</small></span></label>
                 <div class="btn-row" style="margin-top:0">
                     <button class="btn btn-secondary" type="button" id="clear" style="flex:1">Limpar</button>
                     <button class="btn btn-primary" type="submit" style="flex:1">Aplicar</button>
@@ -277,7 +277,7 @@ function openFilters(state) {
                 event.preventDefault();
                 apply(form.who.value ? Number(form.who.value) : null, form.closed.checked);
             });
-            sheet.querySelector('#clear').addEventListener('click', () => apply(null, false));
+            sheet.querySelector('#clear').addEventListener('click', () => apply(null, true));
         },
     });
 }

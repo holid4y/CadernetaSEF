@@ -1,5 +1,5 @@
-import { CATALOG } from './data.js';
-import { changeStatus, scheduleAppointment, toggleDocument, ValidationError } from './domain.js';
+import { CATALOG, DEFAULT_PLACE } from './data.js';
+import { changeStatus, documentsAreDue, scheduleAppointment, toggleDocument, ValidationError } from './domain.js';
 import { addDays, at, dayKey, minutes, pad, startOfDay } from './util.js';
 
 const USERS = [
@@ -39,15 +39,15 @@ const CLIENTS = [
     { type: 'individual', kind: 'pf', name: 'Joana Lima', phone: '(51) 99812-4410', email: 'joana.lima@example.com', document: makeCpf('123456789') },
     { type: 'individual', kind: 'pf', name: 'Carlos Eduardo Souza', phone: '(51) 99701-2280' },
     { type: 'organization', kind: 'mei', name: 'Teresa Alves Doces', tradeName: 'Doces da Vó Teresa', document: makeCnpj('451239870001'), phone: '(51) 98455-0192', email: 'contato@docesdavo.example.com' },
-    { type: 'organization', kind: 'ong', name: 'Associação Comunitária Vila Nova', tradeName: 'ACVN', phone: '(51) 3595-2211', email: 'acvn@example.org' },
+    { type: 'ngo', kind: 'ong', name: 'Associação Comunitária Vila Nova', tradeName: 'ACVN', phone: '(51) 3595-2211', email: 'acvn@example.org' },
     { type: 'individual', kind: 'pf', name: 'Marcos Pereira', phone: '(51) 99633-8814', email: 'marcos.p@example.com' },
     { type: 'organization', kind: 'mei', name: 'Oficina do Beto Reparos', tradeName: 'Oficina do Beto', phone: '(51) 98122-7765' },
     { type: 'individual', kind: 'pf', name: 'Luciana Ferreira', phone: '(51) 99277-3301', email: 'lu.ferreira@example.com' },
-    { type: 'organization', kind: 'ong', name: 'Instituto Mãos que Ajudam', tradeName: 'Mãos que Ajudam', phone: '(51) 3587-4400', email: 'contato@maos.example.org' },
+    { type: 'ngo', kind: 'ong', name: 'Instituto Mãos que Ajudam', tradeName: 'Mãos que Ajudam', phone: '(51) 3587-4400', email: 'contato@maos.example.org' },
     { type: 'individual', kind: 'pf', name: 'Roberto Klein', phone: '(51) 99544-1207', email: 'roberto.klein@example.com' },
     { type: 'organization', kind: 'empresa', name: 'Padaria Pão Quente Ltda', tradeName: 'Pão Quente', document: makeCnpj('120987650001'), phone: '(51) 3594-7788', email: 'paoquente@example.com' },
     { type: 'individual', kind: 'pf', name: 'Fernanda Müller', phone: '(51) 99388-6521' },
-    { type: 'organization', kind: 'ong', name: 'Associação de Moradores do Santo Afonso', tradeName: 'Moradores do Santo Afonso', phone: '(51) 3584-1930', email: 'santoafonso@example.org' },
+    { type: 'ngo', kind: 'ong', name: 'Associação de Moradores do Santo Afonso', tradeName: 'Moradores do Santo Afonso', phone: '(51) 3584-1930', email: 'santoafonso@example.org' },
 ];
 
 const DEMANDS = {
@@ -181,7 +181,7 @@ export function buildSeed(now = Date.now()) {
                 start,
                 end,
                 locationType: where?.[0] ?? 'on_campus',
-                location: where?.[1] ?? (where ? null : 'Sala 205, prédio Azul'),
+                location: where?.[1] ?? (where ? null : DEFAULT_PLACE),
             },
             createdAt,
         );
@@ -195,7 +195,7 @@ export function buildSeed(now = Date.now()) {
         };
         STEPS[status].forEach((step) => changeStatus(state, byId(responsibleId), appointment.id, step, stamps[step]));
 
-        const delivered = status === 'completed' ? appointment.documents.length : status === 'scheduled' ? 0 : Math.ceil(appointment.documents.length / 2);
+        const delivered = status === 'scheduled' || !documentsAreDue(appointment, now) ? 0 : status === 'completed' ? appointment.documents.length : Math.ceil(appointment.documents.length / 2);
         appointment.documents.slice(0, delivered).forEach((doc) => toggleDocument(state, byId(responsibleId), appointment.id, doc.id, Math.min(now, start)));
 
         const client = state.clients[clientIndex];

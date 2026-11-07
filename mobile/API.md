@@ -68,6 +68,7 @@ O cliente só substitui o estado depois de uma resposta de sucesso.
 | `setServiceActive` | `[slug, active]` | null |
 | `addServiceDocument` | `[slug, name]` | null |
 | `removeServiceDocument` | `[slug, index, name?]` | null |
+| `deleteService` | `[slug]` | null |
 | `dismissGoogleEvent` | `[googleEventId]` | null |
 
 `scheduleAppointment` aceita `input.googleEventId`: o atendimento nasce ligado

@@ -39,7 +39,8 @@ final class MobileState
             'users' => UserResource::collection(User::query()->orderBy('name')->get())->resolve($request),
             'clients' => ClientResource::collection($clients)->resolve($request),
             'services' => ServiceResource::collection(
-                Service::query()->with(['category:id,slug', 'documents'])->orderBy('sort_order')->orderBy('id')->get(),
+                // Removed services still name the appointments that used them.
+                Service::withTrashed()->with(['category:id,slug', 'documents'])->orderBy('sort_order')->orderBy('id')->get(),
             )->resolve($request),
             'appointments' => AppointmentResource::collection($appointments)->resolve($request),
             'google' => GoogleStatus::for($request->user()),

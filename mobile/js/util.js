@@ -170,7 +170,7 @@ export const formatDocument = (value) => {
 };
 
 export const maskDocument = (value, type) => {
-    if (type === 'organization') {
+    if (type === 'organization' || type === 'ngo') {
         return documentChars(value)
             .slice(0, 14)
             .replace(/^(\w{2})(\w)/, '$1.$2')

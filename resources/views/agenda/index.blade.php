@@ -55,7 +55,7 @@
             </x-select-input>
 
             <label class="inline-flex min-h-11 items-center gap-2 text-sm text-ink-muted">
-                <x-checkbox-input data-agenda-filter="cancelled" />
+                <x-checkbox-input data-agenda-filter="cancelled" checked />
                 {{ __('agenda.show_cancelled') }}
             </label>
         </div>

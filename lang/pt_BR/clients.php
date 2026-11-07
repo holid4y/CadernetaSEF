@@ -6,6 +6,7 @@ return [
     'type' => [
         'individual' => 'Pessoa Física',
         'organization' => 'Pessoa Jurídica',
+        'ngo' => 'ONG',
     ],
 
     'fields' => [
@@ -59,7 +60,7 @@ return [
         'title' => 'Importar planilha de atendidos',
         'subtitle' => 'Traga os atendidos que o projeto já tem numa planilha do Excel (.xlsx) ou em CSV. Nada é gravado antes de você conferir a prévia.',
         'file' => 'Planilha',
-        'file_hint' => 'A primeira linha precisa ter os nomes das colunas. Até 1000 atendidos por vez.',
+        'file_hint' => 'A primeira linha precisa ter os nomes das colunas. Até 1 MB e 1000 atendidos por vez.',
         'area_code' => 'DDD padrão',
         'area_code_hint' => 'Telefones sem DDD recebem este. Celulares antigos, com oito dígitos, ganham o 9 na frente.',
         'load' => 'Ler planilha',

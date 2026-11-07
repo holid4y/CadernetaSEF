@@ -95,7 +95,7 @@ class Appointment extends Model
      */
     public function service(): BelongsTo
     {
-        return $this->belongsTo(Service::class);
+        return $this->belongsTo(Service::class)->withTrashed();
     }
 
     /**
@@ -133,6 +133,12 @@ class Appointment extends Model
      * @param  array<string, mixed>  $old
      * @param  array<string, mixed>  $new
      */
+    // People bring their documents to the appointment, so the checklist opens on that day.
+    public function documentsAreDue(): bool
+    {
+        return ! DisplayTimezone::toLocal($this->starts_at)->startOfDay()->isAfter(DisplayTimezone::toLocal(now()));
+    }
+
     public function recordActivity(ActivityType $type, ?User $user, array $old = [], array $new = []): AppointmentActivity
     {
         return $this->activities()->create([
@@ -141,14 +147,6 @@ class Appointment extends Model
             'old_values' => $old ?: null,
             'new_values' => $new ?: null,
         ]);
-    }
-
-    /**
-     * @param  Builder<Appointment>  $query
-     */
-    public function scopeWithPendingDocumentsCount(Builder $query): void
-    {
-        $query->withCount(['documents as pending_documents_count' => fn (Builder $documents) => $documents->whereNull('received_at')]);
     }
 
     /**

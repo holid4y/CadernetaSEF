@@ -33,7 +33,7 @@ class ClientForm extends Form
 
     public function isOrganization(): bool
     {
-        return $this->type === ClientType::Organization->value;
+        return ClientType::tryFrom($this->type)?->isLegalEntity() ?? false;
     }
 
     public function setClient(Client $client): void

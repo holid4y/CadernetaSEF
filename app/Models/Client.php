@@ -110,7 +110,7 @@ class Client extends Model
 
     public function isOrganization(): bool
     {
-        return $this->type === ClientType::Organization;
+        return $this->type->isLegalEntity();
     }
 
     /**

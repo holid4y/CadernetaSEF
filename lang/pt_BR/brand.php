@@ -8,7 +8,7 @@ return [
     'title' => 'Agenda de atendimentos',
     'lead' => 'Área de trabalho da equipe do projeto: agenda, atendidos e os documentos de cada atendimento.',
     'place_label' => 'Onde',
-    'place' => 'Universidade Feevale, salas parceiras (como a Sala do Empreendedor de Campo Bom) e on-line',
+    'place' => 'Sala 105, Campus II da Universidade Feevale, ou on-line',
     'contact_label' => 'Coordenação',
     'coordinator' => 'Profa. Maristela Mercedes Bauer',
     'contact' => 'maristelabauer@feevale.br',

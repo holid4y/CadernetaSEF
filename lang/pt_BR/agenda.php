@@ -10,7 +10,6 @@ return [
     'filter_responsible' => 'Responsável',
     'everyone' => 'Toda a equipe',
     'show_cancelled' => 'Mostrar cancelados e faltas',
-    'pending_documents' => '{1} 1 documento pendente|[2,*] :count documentos pendentes',
     'saving' => 'Salvando…',
     'saved' => 'Horário atualizado.',
     'failed' => 'Não foi possível mudar o horário.',

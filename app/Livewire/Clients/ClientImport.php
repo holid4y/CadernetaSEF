@@ -47,7 +47,7 @@ class ClientImport extends Component
     {
         $this->authorize('create', Client::class);
         $this->validate([
-            'file' => ['required', 'file', 'max:10240', 'extensions:csv,xlsx'],
+            'file' => ['required', 'file', 'max:1024', 'extensions:csv,xlsx'],
             'areaCode' => ['nullable', 'digits:2'],
         ]);
 

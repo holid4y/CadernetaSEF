@@ -18,8 +18,9 @@ class ImpactController extends Controller
         [$from, $to] = $request->range();
 
         return view('impact.index', [
-            'data' => ImpactIndicators::between($from, $to),
+            'data' => ImpactIndicators::between($from, $to, $request->clientType()),
             'period' => $request->period(),
+            'type' => $request->clientType(),
             'from' => DisplayTimezone::toLocal($from),
             'until' => DisplayTimezone::toLocal($to)->subDay(),
         ]);
@@ -28,7 +29,8 @@ class ImpactController extends Controller
     public function export(ImpactRequest $request): Response
     {
         [$from, $to] = $request->range();
-        $data = ImpactIndicators::between($from, $to);
+        $type = $request->clientType();
+        $data = ImpactIndicators::between($from, $to, $type);
         $first = DisplayTimezone::toLocal($from);
         $last = DisplayTimezone::toLocal($to)->subDay();
         $rate = $data['attendance_rate'] === null ? '' : round($data['attendance_rate'] * 100).'%';
@@ -36,14 +38,15 @@ class ImpactController extends Controller
         $rows = [
             ['Indicador', 'Valor'],
             ['Período', $first->format('d/m/Y').' a '.$last->format('d/m/Y')],
+            ['Atendidos', $type?->label() ?? 'Todos'],
             ['Total de atendimentos', $data['total']],
             ...array_map(fn (AppointmentStatus $status): array => [$status->label(), $data['status'][$status->value]], AppointmentStatus::cases()),
             ['Taxa de comparecimento', $rate],
             ['Pessoas atendidas (únicas)', $data['unique_clients']],
             ['Pessoa física', $data['individuals']],
             ['Pessoa jurídica', $data['organizations']],
+            ['ONG', $data['ngos']],
             ['MEI', $data['mei']],
-            ['ONGs e terceiro setor', $data['third_sector']],
             [],
             ['Demandas mais frequentes', 'Atendimentos'],
             ...array_map(fn (array $demand): array => [$demand['name'], $demand['count']], array_slice($data['demands'], 0, 50)),
@@ -60,7 +63,7 @@ class ImpactController extends Controller
 
         return response($csv, 200, [
             'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => sprintf('attachment; filename="impacto-%s-a-%s.csv"', $first->format('Y-m-d'), $last->format('Y-m-d')),
+            'Content-Disposition' => sprintf('attachment; filename="impacto-%s%s-a-%s.csv"', $request->input('tipo') ? $request->input('tipo').'-' : '', $first->format('Y-m-d'), $last->format('Y-m-d')),
         ]);
     }
 

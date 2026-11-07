@@ -27,6 +27,21 @@ class DashboardTest extends TestCase
             ->assertSeeInOrder(['Atendimentos de hoje', 'Hoje à Noite', 'Próximos 7 dias', 'Amanhã Cedo']);
     }
 
+    public function test_completed_appointments_of_the_month_are_counted(): void
+    {
+        // 22:00 on 31/10 in São Paulo still belongs to October.
+        $this->travelTo('2026-11-10 12:00');
+        Appointment::factory()->status(AppointmentStatus::Completed)->between('2026-11-03 13:00', '2026-11-03 14:00')->create();
+        Appointment::factory()->status(AppointmentStatus::Completed)->between('2026-11-01 01:00', '2026-11-01 02:00')->create();
+        Appointment::factory()->status(AppointmentStatus::Cancelled)->between('2026-11-04 13:00', '2026-11-04 14:00')->create();
+
+        $this->actingAs(User::factory()->create())
+            ->get('/dashboard')
+            ->assertViewHas('stats', fn (array $stats): bool => $stats['completed'] === 1)
+            ->assertSee('concluídos este mês')
+            ->assertDontSee('documentos pendentes');
+    }
+
     public function test_cancelled_appointments_are_not_listed(): void
     {
         $this->travelTo('2026-10-05 12:00');

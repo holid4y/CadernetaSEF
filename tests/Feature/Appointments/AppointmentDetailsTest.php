@@ -55,21 +55,37 @@ class AppointmentDetailsTest extends TestCase
     public function test_documents_are_checked_off(): void
     {
         $this->actingAs(User::factory()->create());
+        $appointment = Appointment::factory()->today()->create();
+        $document = $appointment->documents()->create(['name' => 'Informe de rendimentos', 'sort_order' => 0]);
+
+        Livewire::test(AppointmentDetails::class, ['appointment' => $appointment])
+            ->assertSee('0 de 1 conferidos')
+            ->assertSeeHtml('role="checkbox"')
+            ->call('markDocument', $document->id, true)
+            ->assertSee('1 de 1 conferidos');
+
+        $this->assertNotNull($document->fresh()->received_at);
+    }
+
+    public function test_documents_wait_for_the_day_of_the_appointment(): void
+    {
+        $this->actingAs(User::factory()->create());
         $appointment = Appointment::factory()->create();
         $document = $appointment->documents()->create(['name' => 'Informe de rendimentos', 'sort_order' => 0]);
 
         Livewire::test(AppointmentDetails::class, ['appointment' => $appointment])
-            ->assertSee('0 de 1 entregues')
+            ->assertSee('A pessoa traz os documentos no dia')
+            ->assertDontSeeHtml('role="checkbox"')
             ->call('markDocument', $document->id, true)
-            ->assertSee('1 de 1 entregues');
+            ->assertHasErrors('documents');
 
-        $this->assertNotNull($document->fresh()->received_at);
+        $this->assertNull($document->fresh()->received_at);
     }
 
     public function test_repeated_clicks_end_in_the_state_the_person_last_saw(): void
     {
         $this->actingAs(User::factory()->create());
-        $appointment = Appointment::factory()->create();
+        $appointment = Appointment::factory()->today()->create();
         $document = $appointment->documents()->create(['name' => 'Informe de rendimentos', 'sort_order' => 0]);
 
         Livewire::test(AppointmentDetails::class, ['appointment' => $appointment])

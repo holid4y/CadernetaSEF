@@ -40,12 +40,17 @@ final class ScheduleAppointment
      */
     public function handle(User $author, array $attributes): Appointment
     {
-        $service = Service::query()->with('documents')->findOrFail($attributes['service_id']);
+        $service = Service::withTrashed()->with('documents')->findOrFail($attributes['service_id']);
         $responsible = User::query()->findOrFail($attributes['responsible_user_id']);
 
         $this->ensureServiceCanBeUsed($service, $attributes['service_details'] ?? null);
 
         return DB::transaction(function () use ($author, $attributes, $service, $responsible): Appointment {
+            // Held until the booking is saved, so the service can not leave the catalog meanwhile.
+            if (! Service::query()->whereKey($service->id)->sharedLock()->exists()) {
+                throw ValidationException::withMessages(['service_id' => __('appointments.errors.deleted_service')]);
+            }
+
             $this->ensureResponsibleIsAvailable->handle($responsible, $attributes['starts_at'], $attributes['ends_at']);
 
             $appointment = Appointment::query()->create([
@@ -75,6 +80,10 @@ final class ScheduleAppointment
 
     private function ensureServiceCanBeUsed(Service $service, ?string $details): void
     {
+        if ($service->trashed()) {
+            throw ValidationException::withMessages(['service_id' => __('appointments.errors.deleted_service')]);
+        }
+
         if (! $service->active) {
             throw ValidationException::withMessages([
                 'service_id' => __('appointments.errors.inactive_service'),

@@ -23,4 +23,9 @@ class ServicePolicy
     {
         return $user->active && $user->isAdmin();
     }
+
+    public function delete(User $user, Service $service): bool
+    {
+        return $user->active && $user->isAdmin();
+    }
 }

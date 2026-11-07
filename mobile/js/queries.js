@@ -1,11 +1,13 @@
-// Impact panel indicators. PF/PJ, MEI, ONG, demands and per-responsible counts
+// Impact panel indicators. PF/PJ/ONG, MEI, demands and per-responsible counts
 // skip cancelled appointments; "people served" counts only completed ones.
+// NGOs are the third sector, so they are counted by the type of the client.
 
-import { CLIENT_TYPES, MEI_SERVICE, STATUS_ORDER, THIRD_SECTOR_CATEGORY } from './data.js';
+import { CLIENT_TYPES, MEI_SERVICE, STATUS_ORDER } from './data.js';
 import { clientOf, serviceOf, userOf } from './domain.js';
 import { addMonths, monthKey, monthShort, startOfMonth } from './util.js';
 
-export const inPeriod = (state, { from, to }) => state.appointments.filter((a) => a.start >= from && a.start < to);
+export const inPeriod = (state, { from, to }, type = null) =>
+    state.appointments.filter((a) => a.start >= from && a.start < to && (!type || clientOf(state, a.clientId).type === type));
 
 const active = (list) => list.filter((a) => a.status !== 'cancelled');
 
@@ -30,9 +32,6 @@ export const byClientType = (state, list) => {
 };
 
 export const meiCount = (list) => active(list).filter((a) => a.serviceSlug === MEI_SERVICE).length;
-
-export const thirdSectorCount = (state, list) =>
-    active(list).filter((a) => serviceOf(state, a.serviceSlug).categorySlug === THIRD_SECTOR_CATEGORY).length;
 
 export const topDemands = (state, list, limit = 5) => {
     const counts = new Map();
@@ -65,8 +64,8 @@ export const peopleByMonth = (list, { from, to }) => {
     });
 };
 
-export const indicators = (state, period) => {
-    const list = inPeriod(state, period);
+export const indicators = (state, period, type = null) => {
+    const list = inPeriod(state, period, type);
     const types = byClientType(state, list);
 
     return {
@@ -76,8 +75,8 @@ export const indicators = (state, period) => {
         uniqueClients: uniqueClientsServed(list),
         individuals: types.individual,
         organizations: types.organization,
+        ngos: types.ngo,
         mei: meiCount(list),
-        thirdSector: thirdSectorCount(state, list),
         topDemands: topDemands(state, list),
         byResponsible: byResponsible(state, list),
         peopleByMonth: peopleByMonth(list, period),
@@ -93,23 +92,24 @@ const cell = (value) => {
 
 export const toCsv = (rows) => rows.map((row) => row.map(cell).join(';')).join('\r\n');
 
-export const indicatorsCsv = (state, period, labels) => {
-    const data = indicators(state, period);
+export const indicatorsCsv = (state, period, labels, type = null) => {
+    const data = indicators(state, period, type);
 
     return toCsv([
         ['Indicador', 'Valor'],
         ['Período', labels.period],
+        ['Atendidos', CLIENT_TYPES[type] ?? 'Todos'],
         ['Total de atendimentos', data.total],
         ...STATUS_ORDER.map((status) => [labels.status[status], data.status[status]]),
         ['Taxa de comparecimento', data.attendanceRate === null ? '' : `${Math.round(data.attendanceRate * 100)}%`],
         ['Pessoas atendidas (únicas)', data.uniqueClients],
         ['Pessoa física', data.individuals],
         ['Pessoa jurídica', data.organizations],
+        ['ONG', data.ngos],
         ['MEI', data.mei],
-        ['ONGs e terceiro setor', data.thirdSector],
         [],
         ['Demandas mais frequentes', 'Atendimentos'],
-        ...topDemands(state, inPeriod(state, period), 50).map((d) => [d.name, d.count]),
+        ...topDemands(state, inPeriod(state, period, type), 50).map((d) => [d.name, d.count]),
         [],
         ['Responsável', 'Atendimentos'],
         ...data.byResponsible.map((r) => [r.name, r.count]),

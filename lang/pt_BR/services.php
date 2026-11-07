@@ -32,14 +32,19 @@ return [
     'save' => 'Salvar serviço',
     'cancel' => 'Cancelar',
 
+    'delete' => 'Excluir serviço',
+    'confirm_delete' => 'Excluir este serviço do catálogo? Ele some da lista e dos novos agendamentos; os atendimentos antigos continuam com ele no histórico.',
+
     'errors' => [
         'too_many_documents' => 'Uma lista pode ter no máximo :max documentos.',
         'stale' => 'A lista de documentos mudou. Atualize os dados e tente de novo.',
         'name_taken' => 'Já existe um serviço com esse nome nesta categoria.',
+        'has_upcoming' => '{1} Há 1 atendimento marcado com este serviço (:date). Remarque ou cancele antes de excluir.|[2,*] Há :count atendimentos marcados com este serviço, o próximo em :date. Remarque ou cancele antes de excluir.',
     ],
 
     'flash' => [
         'created' => 'Serviço ":name" criado.',
         'updated' => 'Serviço ":name" atualizado.',
+        'deleted' => 'Serviço ":name" excluído do catálogo. Os atendimentos antigos continuam com ele no histórico.',
     ],
 ];

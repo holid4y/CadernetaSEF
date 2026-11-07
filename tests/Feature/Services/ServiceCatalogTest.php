@@ -4,12 +4,17 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Services;
 
+use App\Domain\Appointments\Actions\ScheduleAppointment;
+use App\Domain\Appointments\Enums\AppointmentStatus;
 use App\Livewire\Services\ServiceCatalog;
 use App\Models\Appointment;
+use App\Models\Client;
 use App\Models\Service;
 use App\Models\ServiceCategory;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
+use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -110,6 +115,71 @@ class ServiceCatalogTest extends TestCase
 
         $this->assertFalse($service->fresh()->active);
         $this->get('/atendimentos/novo')->assertDontSee('Serviço antigo');
+    }
+
+    public function test_a_deleted_service_leaves_the_catalog_but_not_the_history(): void
+    {
+        $this->actingAs(User::factory()->admin()->create());
+        $service = Service::factory()->create(['name' => 'Serviço antigo', 'slug' => 'servico-antigo']);
+        $past = Appointment::factory()->for($service)->status(AppointmentStatus::Completed)->between('2026-09-01 13:00', '2026-09-01 14:00')->create();
+        Appointment::factory()->for($service)->status(AppointmentStatus::Cancelled)->create();
+
+        Livewire::test(ServiceCatalog::class)
+            ->call('edit', $service->id)
+            ->assertSee('Excluir serviço')
+            ->call('delete')
+            ->assertHasNoErrors()
+            ->assertSee('Serviço "Serviço antigo" excluído do catálogo.')
+            ->assertDontSeeHtml('wire:click="edit('.$service->id.')"');
+
+        $this->assertSoftDeleted($service);
+        $this->assertSame('Serviço antigo', $past->fresh()->service->name);
+        $this->get('/atendimentos/novo')->assertDontSee('Serviço antigo');
+        $this->get(route('appointments.show', $past))->assertOk()->assertSee('Serviço antigo');
+
+        // The name is free again; the slug of the old one is kept for its history.
+        Livewire::test(ServiceCatalog::class)
+            ->call('create')
+            ->set('service_category_id', $service->service_category_id)
+            ->set('name', 'Serviço antigo')
+            ->call('save')
+            ->assertHasNoErrors();
+        $this->assertSame('servico-antigo-2', Service::query()->sole()->slug);
+    }
+
+    public function test_a_service_with_appointments_ahead_is_not_deleted(): void
+    {
+        $this->travelTo('2026-11-07 12:00');
+        $this->actingAs(User::factory()->admin()->create());
+        $service = Service::factory()->create();
+        Appointment::factory()->for($service)->between('2026-11-12 13:00', '2026-11-12 14:00')->create();
+        Appointment::factory()->for($service)->status(AppointmentStatus::Confirmed)->between('2026-11-20 13:00', '2026-11-20 14:00')->create();
+
+        Livewire::test(ServiceCatalog::class)
+            ->call('edit', $service->id)
+            ->call('delete')
+            ->assertHasErrors('service')
+            ->assertSee('Há 2 atendimentos marcados com este serviço, o próximo em 12/11.');
+
+        $this->assertNotSoftDeleted($service);
+    }
+
+    public function test_a_deleted_service_can_not_be_booked(): void
+    {
+        $member = User::factory()->create();
+        $service = Service::factory()->create();
+        $service->delete();
+
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('Este serviço foi excluído do catálogo');
+
+        app(ScheduleAppointment::class)->handle($member, [
+            'client_id' => Client::factory()->create()->id,
+            'service_id' => $service->id,
+            'responsible_user_id' => $member->id,
+            'starts_at' => Carbon::parse('2026-12-01 13:00', 'UTC'),
+            'ends_at' => Carbon::parse('2026-12-01 14:00', 'UTC'),
+        ]);
     }
 
     public function test_slugs_stay_unique_when_names_repeat(): void

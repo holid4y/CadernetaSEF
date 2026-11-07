@@ -14,7 +14,7 @@ return [
         'today' => 'atendimentos hoje',
         'week' => 'nos próximos 7 dias',
         'confirmed' => 'presenças confirmadas',
-        'pending_documents' => 'documentos pendentes',
+        'completed' => 'concluídos este mês',
     ],
     'new_appointment' => 'Novo atendimento',
 ];

@@ -35,11 +35,6 @@
 
             <span class="mt-2 flex flex-wrap items-center gap-2 sm:mt-1">
                 <span class="sm:hidden"><x-status-badge :status="$appointment->status" /></span>
-                @if ($appointment->pending_documents_count > 0)
-                    <span class="rounded-full bg-clay-soft px-2 py-0.5 text-xs text-clay">
-                        {{ trans_choice('agenda.pending_documents', $appointment->pending_documents_count) }}
-                    </span>
-                @endif
             </span>
         </span>
     </x-slot>

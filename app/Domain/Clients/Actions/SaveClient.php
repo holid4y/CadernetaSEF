@@ -34,7 +34,7 @@ final class SaveClient
     public function handle(?Client $client, array $input, bool $requireContact = true): Client
     {
         $data = Validator::make($input, self::rules($client, $input['type'] ?? null, $requireContact), self::messages())->validate();
-        $organization = $data['type'] === ClientType::Organization->value;
+        $organization = ClientType::from($data['type'])->isLegalEntity();
 
         $client ??= new Client;
         $client->fill([

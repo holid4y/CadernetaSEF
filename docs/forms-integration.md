@@ -163,7 +163,7 @@ As consultas usam os mesmos cabeçalhos de assinatura e corpo vazio.
   "starts_at": "2026-10-22T12:00:00+00:00",
   "ends_at": "2026-10-22T13:00:00+00:00",
   "location_type": "on_campus",
-  "location": "Sala 205",
+  "location": "Sala 105, Campus II",
   "service": { "slug": "irpf", "name": "IRPF", "category": "Fiscal", "details": null },
   "responsible": { "name": "Ana Souza" },
   "client": {
@@ -187,6 +187,9 @@ incluindo os dois), no mesmo formato, 50 por página, em ordem de início:
 `{"data": [...], "next_page": 2}`. Peça a página seguinte com `&page=2` até
 `next_page` vir `null`. O período vai até 92 dias. Assine o caminho com a query
 exatamente como enviada.
+
+`client.type` é `individual` (pessoa física, CPF), `organization` (pessoa
+jurídica, CNPJ) ou `ngo` (ONG, CNPJ).
 
 Referências inexistentes ou atendimentos removidos logicamente respondem 404.
 As observações internas da equipe e o histórico não saem da Caderneta.

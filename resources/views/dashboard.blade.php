@@ -15,7 +15,7 @@
             <x-stat-tile tone="primary" :value="$stats['today']" :label="__('dashboard.stats.today')" />
             <x-stat-tile tone="moss" :value="$stats['week']" :label="__('dashboard.stats.week')" style="animation-delay: 60ms" />
             <x-stat-tile tone="ochre" :value="$stats['confirmed']" :label="__('dashboard.stats.confirmed')" style="animation-delay: 120ms" />
-            <x-stat-tile tone="clay" :value="$stats['pending_documents']" :label="__('dashboard.stats.pending_documents')" style="animation-delay: 180ms" />
+            <x-stat-tile tone="clay" :value="$stats['completed']" :label="__('dashboard.stats.completed')" style="animation-delay: 180ms" />
         </div>
 
         <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">

@@ -2,7 +2,7 @@ import { CATALOG } from '../data.js';
 import { can, serviceOf, ValidationError } from '../domain.js';
 import { refresh } from '../router.js';
 import { store } from '../store.js';
-import { backButton, emptyState, icon, openSheet, toast } from '../ui.js';
+import { backButton, confirmDialog, emptyState, icon, openSheet, toast } from '../ui.js';
 import { esc, plural } from '../util.js';
 
 export default function services({ state, user }) {
@@ -14,7 +14,7 @@ export default function services({ state, user }) {
         html: `<header class="appbar">${backButton('/')}<h1>Serviços e documentos</h1></header>
             <p class="muted" style="margin-bottom:6px">A lista de documentos é copiada para cada atendimento na hora de agendar. Mudar aqui não altera os atendimentos que já existem.</p>
             ${CATALOG.map((category) => {
-                const items = state.services.filter((s) => s.categorySlug === category.slug);
+                const items = state.services.filter((s) => s.categorySlug === category.slug && !s.deleted);
                 return `<div class="section-title"><h2>${esc(category.name)}</h2></div>
                     <div class="card" style="padding:6px 14px">${items
                         .map(
@@ -74,13 +74,36 @@ function openService(slug) {
                 run('setServiceActive', slug, event.target.checked);
             });
 
-            sheet.addEventListener('click', (event) => {
+            sheet.addEventListener('click', async (event) => {
                 if (event.target.closest('[data-done]')) {
                     close();
                     refresh();
                 }
+
+                if (event.target.closest('[data-delete]')) {
+                    const sure = await confirmDialog({
+                        title: 'Excluir serviço?',
+                        message: 'Ele some da lista e dos novos agendamentos; os atendimentos antigos continuam com ele no histórico.',
+                        confirmLabel: 'Excluir',
+                        danger: true,
+                    });
+                    if (!sure) return;
+
+                    try {
+                        await store.action('deleteService', slug);
+                        close();
+                        refresh();
+                        toast('Serviço excluído do catálogo.');
+                    } catch (error) {
+                        if (!(error instanceof ValidationError)) throw error;
+                        toast(error.message);
+                    }
+                }
             });
-            sheet.insertAdjacentHTML('beforeend', '<button class="btn btn-secondary btn-block" type="button" data-done style="margin-top:16px">Pronto</button>');
+            sheet.insertAdjacentHTML(
+                'beforeend',
+                '<button class="btn btn-secondary btn-block" type="button" data-done style="margin-top:16px">Pronto</button><button class="btn btn-danger btn-block" type="button" data-delete style="margin-top:8px">Excluir serviço</button>',
+            );
         },
     });
 }

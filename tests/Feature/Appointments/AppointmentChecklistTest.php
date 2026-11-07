@@ -12,6 +12,7 @@ use App\Models\Service;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
+use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
 class AppointmentChecklistTest extends TestCase
@@ -68,6 +69,20 @@ class AppointmentChecklistTest extends TestCase
         $mark->handle($document, received: true);
 
         $this->assertSame('13:00', $document->fresh()->received_at->format('H:i'));
+    }
+
+    public function test_documents_are_checked_from_the_day_of_the_appointment(): void
+    {
+        $document = $this->scheduleFor($this->irpf())->documents->first();
+        $mark = app(MarkDocumentReceived::class);
+
+        // 2026-10-05 13:00 UTC is 10:00 in São Paulo; the day starts at 03:00 UTC.
+        $this->travelTo(Carbon::parse('2026-10-05 02:59', 'UTC'));
+        $this->assertThrows(fn () => $mark->handle($document, received: true), ValidationException::class);
+
+        $this->travelTo(Carbon::parse('2026-10-05 03:00', 'UTC'));
+        $mark->handle($document, received: true);
+        $this->assertNotNull($document->fresh()->received_at);
     }
 
     private function irpf(): Service

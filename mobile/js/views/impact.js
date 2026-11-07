@@ -1,4 +1,4 @@
-import { STATUS, STATUS_ORDER } from '../data.js';
+import { CLIENT_TYPES, STATUS, STATUS_ORDER } from '../data.js';
 import { openProfile } from '../profile.js';
 import { indicators, indicatorsCsv } from '../queries.js';
 import { refresh } from '../router.js';
@@ -12,7 +12,7 @@ const PERIODS = [
     ['custom', 'Datas'],
 ];
 
-const view = { period: 'quarter', from: null, to: null };
+const view = { period: 'quarter', from: null, to: null, type: null };
 
 const periodRange = () => {
     const now = Date.now();
@@ -39,10 +39,10 @@ const bars = (items, tone = 'primary') => {
 
 export default function impact({ state, user }) {
     const range = periodRange();
-    const data = indicators(state, range);
+    const data = indicators(state, range, view.type);
     const rate = data.attendanceRate === null ? '—' : `${Math.round(data.attendanceRate * 100)}%`;
-    const types = data.individuals + data.organizations;
-    const pctIndividual = types ? (data.individuals / types) * 100 : 0;
+    const kinds = [['Pessoa física', data.individuals, 'var(--primary)'], ['Pessoa jurídica', data.organizations, 'var(--ochre)'], ['ONG', data.ngos, 'var(--moss)']];
+    const people = Math.max(1, data.individuals + data.organizations + data.ngos);
     const maxMonth = Math.max(1, ...data.peopleByMonth.map((m) => m.count));
 
     return {
@@ -64,6 +64,9 @@ export default function impact({ state, user }) {
                     </div>`
                     : ''
             }
+            <div class="seg" role="group" aria-label="Atendidos" style="margin-top:10px">
+                ${[[null, 'Todos'], ...Object.entries(CLIENT_TYPES)].map(([value, text]) => `<button type="button" data-type="${value ?? ''}" aria-pressed="${view.type === value}">${text}</button>`).join('')}
+            </div>
             <p class="hint-text" style="margin:10px 2px 14px">${esc(periodLabel(range))}</p>
 
             <section class="stats rise">
@@ -81,17 +84,16 @@ export default function impact({ state, user }) {
             </section>
 
             <section class="card">
-                <div class="card-head"><h2>Pessoa física e jurídica</h2></div>
-                <div class="split" role="img" aria-label="${data.individuals} pessoas físicas e ${data.organizations} pessoas jurídicas">
-                    <i style="width:${pctIndividual}%;background:var(--primary)"></i><i style="width:${100 - pctIndividual}%;background:var(--ochre)"></i>
+                <div class="card-head"><h2>Quem foi atendido</h2></div>
+                <div class="split" role="img" aria-label="${esc(kinds.map(([label, count]) => `${label}: ${count}`).join(', '))}">
+                    ${kinds.map(([, count, color]) => `<i style="width:${(count / people) * 100}%;background:${color}"></i>`).join('')}
                 </div>
                 <div class="legend">
-                    <span style="--tone:var(--primary)">Pessoa física: <b>${data.individuals}</b></span>
-                    <span style="--tone:var(--ochre)">Pessoa jurídica: <b>${data.organizations}</b></span>
+                    ${kinds.map(([label, count, color]) => `<span style="--tone:${color}">${label}: <b>${count}</b></span>`).join('')}
                 </div>
                 <div class="stats" style="margin-top:14px">
                     <div class="stat tone-clay"><b>${data.mei}</b><span>atendimentos de MEI</span></div>
-                    <div class="stat tone-moss"><b>${data.thirdSector}</b><span>ONGs e terceiro setor</span></div>
+                    <div class="stat tone-moss"><b>${data.ngos}</b><span>atendimentos de ONGs (terceiro setor)</span></div>
                 </div>
             </section>
 
@@ -122,6 +124,13 @@ export default function impact({ state, user }) {
                 }),
             );
 
+            root.querySelectorAll('[data-type]').forEach((button) =>
+                button.addEventListener('click', () => {
+                    view.type = button.dataset.type || null;
+                    refresh();
+                }),
+            );
+
             root.querySelector('#from')?.addEventListener('change', (event) => {
                 view.from = event.target.value || null;
                 refresh();
@@ -134,7 +143,8 @@ export default function impact({ state, user }) {
             root.querySelector('#export').addEventListener('click', async () => {
                 const labels = { period: periodLabel(range), status: Object.fromEntries(STATUS_ORDER.map((s) => [s, STATUS[s].label])) };
                 try {
-                    await downloadFile(`impacto-${dayKey(range.from)}-a-${dayKey(range.to - 86_400_000)}.csv`, indicatorsCsv(state, range, labels));
+                    const prefix = { individual: 'pf-', organization: 'pj-', ngo: 'ong-' }[view.type] ?? '';
+                    await downloadFile(`impacto-${prefix}${dayKey(range.from)}-a-${dayKey(range.to - 86_400_000)}.csv`, indicatorsCsv(state, range, labels, view.type));
                     toast('Arquivo CSV gerado.');
                 } catch {
                     toast('Não foi possível exportar o arquivo. Tente novamente.');

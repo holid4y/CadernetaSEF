@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Domain\Clients\Enums\ClientType;
 use App\Support\DisplayTimezone;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Carbon;
@@ -19,12 +20,19 @@ class ImpactRequest extends FormRequest
         'datas' => 'Datas',
     ];
 
+    // Who was served, in the query string as ?tipo=ong.
+    public const TYPES = [
+        'pf' => ClientType::Individual,
+        'pj' => ClientType::Organization,
+        'ong' => ClientType::Ngo,
+    ];
+
     private const MAX_YEARS = 5;
 
     // A query string can carry lists (de[]=...), which the date rules can not read.
     protected function prepareForValidation(): void
     {
-        $this->merge(array_map(fn (mixed $value): mixed => is_string($value) ? $value : null, $this->only('periodo', 'de', 'ate')));
+        $this->merge(array_map(fn (mixed $value): mixed => is_string($value) ? $value : null, $this->only('periodo', 'de', 'ate', 'tipo')));
     }
 
     public function rules(): array
@@ -33,6 +41,7 @@ class ImpactRequest extends FormRequest
             'periodo' => ['nullable', Rule::in(array_keys(self::PERIODS))],
             'de' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:2020-01-01'],
             'ate' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:de'],
+            'tipo' => ['nullable', Rule::in(array_keys(self::TYPES))],
         ];
     }
 
@@ -45,6 +54,11 @@ class ImpactRequest extends FormRequest
                 $validator->errors()->add('ate', 'Escolha no máximo '.self::MAX_YEARS.' anos.');
             }
         }];
+    }
+
+    public function clientType(): ?ClientType
+    {
+        return self::TYPES[$this->input('tipo')] ?? null;
     }
 
     public function period(): string

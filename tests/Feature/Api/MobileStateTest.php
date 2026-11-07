@@ -59,6 +59,7 @@ class MobileStateTest extends TestCase
             'minutes' => 45,
             'requiresDetails' => false,
             'active' => true,
+            'deleted' => false,
             'documents' => ['Informe de rendimentos', 'Recibo da última declaração'],
         ], $state['services'][0]);
 

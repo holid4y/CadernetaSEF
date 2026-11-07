@@ -44,7 +44,6 @@ final class UpcomingAppointments
     {
         return Appointment::query()
             ->with(['client', 'service', 'responsible', 'documents'])
-            ->withPendingDocumentsCount()
             ->blocking()
             ->orderBy('starts_at');
     }

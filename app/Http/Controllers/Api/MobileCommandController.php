@@ -14,6 +14,7 @@ use App\Domain\Appointments\Enums\AppointmentStatus;
 use App\Domain\Appointments\Enums\LocationType;
 use App\Domain\Clients\Actions\SaveClient;
 use App\Domain\Google\Actions\ImportGoogleEvent;
+use App\Domain\Services\Actions\DeleteService;
 use App\Domain\Services\Actions\SaveService;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\MobileCommandRequest;
@@ -67,6 +68,7 @@ class MobileCommandController extends Controller
         private SendAppointmentReminder $sendReminder,
         private UndoStatusChange $undo,
         private SaveService $saveService,
+        private DeleteService $deleteService,
         private ImportGoogleEvent $importGoogleEvent,
     ) {}
 
@@ -87,6 +89,7 @@ class MobileCommandController extends Controller
                 'setServiceActive' => $this->setServiceActive($args),
                 'addServiceDocument' => $this->addServiceDocument($args),
                 'removeServiceDocument' => $this->removeServiceDocument($args),
+                'deleteService' => $this->deleteService($args),
                 'dismissGoogleEvent' => $this->dismissGoogleEvent($args),
             };
         } catch (ValidationException $error) {
@@ -156,7 +159,7 @@ class MobileCommandController extends Controller
 
         $attributes = [
             'client_id' => $input['clientId'],
-            'service_id' => Service::query()->where('slug', $input['serviceSlug'])->value('id'),
+            'service_id' => Service::withTrashed()->where('slug', $input['serviceSlug'])->value('id'),
             'responsible_user_id' => $input['responsibleId'],
             'starts_at' => self::moment($input['start']),
             'ends_at' => self::moment($input['end']),
@@ -339,6 +342,17 @@ class MobileCommandController extends Controller
 
             return [$active, array_values($documents)];
         });
+    }
+
+    private function deleteService(array $args): null
+    {
+        $data = self::validate($args, ['slug'], ['slug' => ['required', 'string']]);
+        $service = Service::query()->where('slug', $data['slug'])->firstOrFail();
+        Gate::authorize('delete', $service);
+
+        $this->deleteService->handle($service);
+
+        return null;
     }
 
     /**

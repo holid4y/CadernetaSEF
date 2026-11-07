@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Clients;
 
 use App\Domain\Appointments\Enums\AppointmentStatus;
+use App\Domain\Clients\Enums\ClientType;
 use App\Livewire\Clients\ClientEditor;
 use App\Livewire\Clients\ClientIndex;
 use App\Models\Appointment;
@@ -77,6 +78,33 @@ class ClientPagesTest extends TestCase
         $this->assertTrue($client->isOrganization());
         $this->assertSame('Amigos do Bairro', $client->trade_name);
         $this->assertFalse($client->accepts_reminders);
+    }
+
+    public function test_an_ngo_is_registered_by_cnpj_and_listed_apart(): void
+    {
+        Livewire::test(ClientEditor::class)
+            ->set('form.type', 'ngo')
+            ->set('form.name', 'Associação Comunitária Vila Nova')
+            ->set('form.trade_name', 'ACVN')
+            ->set('form.email', 'acvn@example.org')
+            ->set('form.document', '529.982.247-25')
+            ->call('save')
+            ->assertHasErrors(['form.document'])
+            ->assertSee('Razão social')
+            ->set('form.document', '11.222.333/0001-81')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $ngo = Client::query()->sole();
+        $this->assertSame(ClientType::Ngo, $ngo->type);
+        $this->assertSame('ACVN', $ngo->trade_name);
+
+        Client::factory()->organization()->create(['name' => 'Padaria Pão Quente']);
+
+        Livewire::test(ClientIndex::class)
+            ->set('type', 'ngo')
+            ->assertSee('Associação Comunitária Vila Nova')
+            ->assertDontSee('Padaria Pão Quente');
     }
 
     public function test_editing_keeps_the_same_record(): void

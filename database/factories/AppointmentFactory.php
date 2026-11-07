@@ -41,6 +41,15 @@ class AppointmentFactory extends Factory
         ]);
     }
 
+    // Already started, so its documents can be checked.
+    public function today(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'starts_at' => now()->startOfHour(),
+            'ends_at' => now()->startOfHour()->addHour(),
+        ]);
+    }
+
     public function status(AppointmentStatus $status): static
     {
         return $this->state(fn (array $attributes) => ['status' => $status]);

@@ -1,5 +1,5 @@
 import { LOCATION_TYPES, STATUS } from './data.js';
-import { categoryOf, clientOf, pendingDocuments, serviceOf } from './domain.js';
+import { categoryOf, clientOf, serviceOf } from './domain.js';
 import { esc, initials, plural, timeStr } from './util.js';
 
 const PATHS = {
@@ -55,8 +55,6 @@ export const emptyState = ({ icon: name = 'calendar', title, text = '', action =
 export const appointmentRow = (state, appointment, { showDate = false } = {}) => {
     const client = clientOf(state, appointment.clientId);
     const service = serviceOf(state, appointment.serviceSlug);
-    const pending = pendingDocuments(appointment);
-    const open = ['scheduled', 'confirmed', 'in_progress'].includes(appointment.status);
     const faded = ['cancelled', 'no_show'].includes(appointment.status);
     const category = categoryOf(service.categorySlug);
     const sub = appointment.serviceDetails ? `${service.name}: ${appointment.serviceDetails}` : service.name;
@@ -70,7 +68,6 @@ export const appointmentRow = (state, appointment, { showDate = false } = {}) =>
             <div class="row-meta">
                 ${statusBadge(appointment.status)}
                 <span class="meta-item">${icon('pin')}${LOCATION_TYPES[appointment.locationType]}</span>
-                ${open && pending > 0 ? `<span class="count-pill" title="Documentos pendentes">${pending} ${pending === 1 ? 'doc.' : 'docs.'}</span>` : ''}
                 ${showDate ? '' : `<span class="sr-only">${esc(category.name)}</span>`}
             </div>
         </div>

@@ -1,4 +1,4 @@
-import { CATALOG, CLIENT_TYPES, LOCATION_TYPES } from '../data.js';
+import { CATALOG, CLIENT_TYPES, DEFAULT_PLACE, LOCATION_TYPES } from '../data.js';
 import {
     can,
     clientOf,
@@ -45,7 +45,7 @@ const newDraft = (query, state, user) => {
         duration: event ? Math.round((event.end - event.start) / 60_000) : 60,
         responsibleId: (eventOwner ?? owner).id,
         locationType: 'on_campus',
-        location: event?.location ?? '',
+        location: event?.location ?? DEFAULT_PLACE,
         notes: '',
         googleEvent: event,
     };
@@ -194,7 +194,7 @@ const wireClient = (box, show, state) => {
 const stepService = (state) => {
     const client = clientOf(state, draft.clientId);
     const category = CATALOG.find((c) => c.slug === draft.categorySlug);
-    const services = category ? state.services.filter((s) => s.categorySlug === category.slug && s.active) : [];
+    const services = category ? state.services.filter((s) => s.categorySlug === category.slug && s.active && !s.deleted) : [];
     const chosen = draft.serviceSlug ? serviceOf(state, draft.serviceSlug) : null;
 
     return `<p class="muted small" style="margin-bottom:4px">Atendido: <b>${esc(client.name)}</b></p>
@@ -335,7 +335,7 @@ const stepWhen = (state) => {
             <div class="field">
                 <span class="label">Local</span>
                 <div class="seg" role="radiogroup" aria-label="Tipo de local">${Object.entries(LOCATION_TYPES).map(([value, text]) => `<button type="button" role="radio" aria-checked="${draft.locationType === value}" data-location-type="${value}">${text}</button>`).join('')}</div>
-                <input class="input" id="location" placeholder="Ex.: Sala 205, prédio Azul" value="${esc(draft.location)}" aria-label="Detalhe do local">
+                <input class="input" id="location" placeholder="Ex.: Sala 105, Campus II" value="${esc(draft.location)}" aria-label="Detalhe do local">
             </div>
             <div class="field"><label for="notes">Observações <span class="opt">(opcional)</span></label><textarea class="textarea" id="notes" placeholder="Algo que a equipe precisa saber antes do atendimento">${esc(draft.notes)}</textarea></div>
 
@@ -402,6 +402,11 @@ const wireWhen = (box, show, state) => {
     box.querySelectorAll('[data-location-type]').forEach((button) =>
         button.addEventListener('click', () => {
             draft.locationType = button.dataset.locationType;
+            // Sala 105 only makes sense for appointments at the university.
+            const onCampus = draft.locationType === 'on_campus';
+            if (!onCampus && draft.location === DEFAULT_PLACE) draft.location = '';
+            if (onCampus && draft.location.trim() === '') draft.location = DEFAULT_PLACE;
+            form.querySelector('#location').value = draft.location;
             box.querySelectorAll('[data-location-type]').forEach((b) => b.setAttribute('aria-checked', String(b === button)));
         }),
     );

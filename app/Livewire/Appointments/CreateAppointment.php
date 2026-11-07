@@ -53,7 +53,7 @@ class CreateAppointment extends Component
 
     public string $location_type = LocationType::OnCampus->value;
 
-    public string $location = '';
+    public string $location = LocationType::DEFAULT_PLACE;
 
     public string $notes = '';
 
@@ -83,7 +83,7 @@ class CreateAppointment extends Component
 
         if ($event !== null) {
             $this->google_event_id = $event->id;
-            $this->location = $event->location ?? '';
+            $this->location = $event->location ?? $this->location;
             $this->responsible_user_id = $event->account->user->canWrite() ? $event->account->user_id : $this->responsible_user_id;
         }
 
@@ -174,6 +174,17 @@ class CreateAppointment extends Component
 
         $this->selectClient($this->new_client->save()->id);
         $this->new_client->reset();
+    }
+
+    public function updatedLocationType(): void
+    {
+        $onCampus = $this->location_type === LocationType::OnCampus->value;
+
+        if (! $onCampus && $this->location === LocationType::DEFAULT_PLACE) {
+            $this->location = '';
+        } elseif ($onCampus && trim($this->location) === '') {
+            $this->location = LocationType::DEFAULT_PLACE;
+        }
     }
 
     public function updatedServiceId(): void

@@ -99,6 +99,7 @@ são confiáveis: tudo é relido do banco.
 | `setServiceActive` | `[slug, active]` | `SaveService` (só admin) | `null` |
 | `addServiceDocument` | `[slug, name]` | `SaveService` (só admin, até 30 itens) | `null` |
 | `removeServiceDocument` | `[slug, index, name?]` | `SaveService` (só admin) | `null` |
+| `deleteService` | `[slug]` | `DeleteService` (só admin; recusa se houver atendimento marcado com ele) | `null` |
 | `dismissGoogleEvent` | `[googleEventId]` | tira um evento do Google da agenda | `null` |
 
 Com `input.googleEventId`, `scheduleAppointment` usa `ImportGoogleEvent`: o

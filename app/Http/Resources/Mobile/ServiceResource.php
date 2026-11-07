@@ -22,6 +22,7 @@ class ServiceResource extends JsonResource
             'minutes' => $this->default_duration_minutes,
             'requiresDetails' => $this->requires_details,
             'active' => $this->active,
+            'deleted' => $this->trashed(),
             'documents' => $this->documents->pluck('name')->values()->all(),
         ];
     }

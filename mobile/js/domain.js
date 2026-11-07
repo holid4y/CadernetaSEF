@@ -2,6 +2,7 @@ import {
     BLOCKING,
     CATALOG,
     CLIENT_TYPES,
+    isLegalEntity,
     LOCATION_TYPES,
     MAX_APPOINTMENT_HOURS,
     ROLES,
@@ -98,6 +99,7 @@ export function scheduleAppointment(state, actor, input, now = Date.now()) {
 
     const service = serviceOf(state, input.serviceSlug);
     if (!service) fail('Escolha a demanda do atendimento.', 'serviceSlug');
+    if (service.deleted) fail('Este serviço foi excluído do catálogo e não pode ser usado em novos atendimentos.', 'serviceSlug');
     if (!service.active) fail('Este serviço foi desativado e não pode ser usado em novos atendimentos.', 'serviceSlug');
 
     const details = (input.serviceDetails ?? '').trim();
@@ -196,8 +198,9 @@ export function toggleDocument(state, actor, appointmentId, documentId, now = Da
     const appointment = appointmentOf(state, appointmentId);
     const document = appointment?.documents.find((d) => d.id === documentId);
     if (!document) fail('Documento não encontrado.');
+    if (!documentsAreDue(appointment, now)) fail('Os documentos são conferidos no dia do atendimento, quando a pessoa traz.');
 
-    // Only the delivery is recorded, never the file.
+    // Only that the person brought it is recorded, never the file.
     document.receivedAt = document.receivedAt ? null : now;
     appointment.updatedAt = now;
     state.meta.edited = true;
@@ -243,10 +246,10 @@ export function saveClient(state, actor, input, id = null, now = Date.now()) {
     authorize(actor, 'clients.write');
 
     const type = input.type;
-    if (!CLIENT_TYPES[type]) fail('Escolha se é pessoa física ou jurídica.', 'type');
+    if (!CLIENT_TYPES[type]) fail('Escolha se é pessoa física, jurídica ou ONG.', 'type');
 
     const name = (input.name ?? '').trim();
-    if (!name) fail(type === 'organization' ? 'Informe a razão social.' : 'Informe o nome do atendido.', 'name');
+    if (!name) fail(isLegalEntity(type) ? 'Informe a razão social.' : 'Informe o nome do atendido.', 'name');
 
     const email = (input.email ?? '').trim();
     if (email && !isEmail(email)) fail('Esse e-mail parece incompleto. Confira se tem @ e o final (.com, .br…).', 'email');
@@ -254,10 +257,10 @@ export function saveClient(state, actor, input, id = null, now = Date.now()) {
     const phone = digits(input.phone);
     if (phone && !dialNumber(input.phone)) fail('O telefone precisa ter DDD e número. Ex.: (51) 99999-9999.', 'phone');
 
-    const document = type === 'organization' ? documentChars(input.document) : digits(input.document);
+    const document = isLegalEntity(type) ? documentChars(input.document) : digits(input.document);
     if (document) {
-        const valid = type === 'organization' ? isValidCnpj(document) : isValidCpf(document);
-        if (!valid) fail(type === 'organization' ? 'Esse CNPJ não confere. Confira os números.' : 'Esse CPF não confere. Confira os números.', 'document');
+        const valid = isLegalEntity(type) ? isValidCnpj(document) : isValidCpf(document);
+        if (!valid) fail(isLegalEntity(type) ? 'Esse CNPJ não confere. Confira os números.' : 'Esse CPF não confere. Confira os números.', 'document');
 
         const duplicate = state.clients.find((c) => c.id !== id && c.document && documentChars(c.document) === document);
         if (duplicate) fail(`Esse documento já está cadastrado para ${duplicate.name}.`, 'document');
@@ -269,7 +272,7 @@ export function saveClient(state, actor, input, id = null, now = Date.now()) {
     const values = {
         type,
         name,
-        tradeName: type === 'organization' ? (input.tradeName ?? '').trim() || null : null,
+        tradeName: isLegalEntity(type) ? (input.tradeName ?? '').trim() || null : null,
         document: document || null,
         phone: input.phone ? input.phone.trim() : null,
         email: email || null,
@@ -325,13 +328,34 @@ export function appointmentsInRange(state, from, to, { responsibleId = null, sho
 export const appointmentsOnDay = (state, ms, filters = {}) =>
     appointmentsInRange(state, startOfDay(ms), addDays(startOfDay(ms), 1), filters);
 
-export const pendingDocuments = (appointment) => appointment.documents.filter((d) => !d.receivedAt).length;
+// People bring their documents to the appointment, so the checklist opens on that day.
+export const documentsAreDue = (appointment, now = Date.now()) => startOfDay(appointment.start) <= now;
 
 export function setServiceActive(state, actor, slug, active) {
     authorize(actor, 'services.manage');
     const service = serviceOf(state, slug);
     if (!service) fail('Serviço não encontrado.');
     service.active = active;
+    state.meta.edited = true;
+}
+
+// The service leaves the catalog but stays in the history of its appointments.
+export function deleteService(state, actor, slug, now = Date.now()) {
+    authorize(actor, 'services.manage');
+    const service = serviceOf(state, slug);
+    if (!service || service.deleted) fail('Serviço não encontrado.');
+
+    const upcoming = state.appointments.filter((a) => a.serviceSlug === slug && isBlocking(a) && a.end > now).sort((a, b) => a.start - b.start);
+    if (upcoming.length) {
+        const date = new Date(upcoming[0].start).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+        fail(
+            upcoming.length === 1
+                ? `Há 1 atendimento marcado com este serviço (${date}). Remarque ou cancele antes de excluir.`
+                : `Há ${upcoming.length} atendimentos marcados com este serviço, o próximo em ${date}. Remarque ou cancele antes de excluir.`,
+        );
+    }
+
+    service.deleted = true;
     state.meta.edited = true;
 }
 

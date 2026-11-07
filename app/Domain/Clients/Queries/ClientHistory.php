@@ -40,7 +40,6 @@ final class ClientHistory
     {
         return $client->appointments()
             ->with(['client', 'service.category', 'responsible', 'documents'])
-            ->withPendingDocumentsCount()
             ->getQuery();
     }
 }

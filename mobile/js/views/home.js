@@ -1,5 +1,5 @@
 import { PROJECT } from '../data.js';
-import { appointmentsInRange, appointmentsOnDay, can, pendingDocuments } from '../domain.js';
+import { appointmentsInRange, appointmentsOnDay, can } from '../domain.js';
 import { GOOGLE_MARK } from '../google.js';
 import { openProfile } from '../profile.js';
 import { appointmentRow, avatar, emptyState, icon, logo } from '../ui.js';
@@ -15,7 +15,7 @@ export default function home({ state, user }) {
         today: todays.filter(open).length,
         week: week.length,
         confirmed: [...todays, ...week].filter((a) => a.status === 'confirmed').length,
-        docs: [...todays, ...week].filter(open).reduce((sum, a) => sum + pendingDocuments(a), 0),
+        completed: appointmentsInRange(state, new Date(new Date(now).getFullYear(), new Date(now).getMonth(), 1).getTime(), addDays(today, 1)).filter((a) => a.status === 'completed').length,
     };
 
     const upcoming = week.slice(0, 5);
@@ -43,7 +43,7 @@ export default function home({ state, user }) {
                 <a class="stat tone-primary" href="#/agenda"><b>${stats.today}</b><span>${stats.today === 1 ? 'atendimento hoje' : 'atendimentos hoje'}</span></a>
                 <a class="stat tone-ochre" href="#/agenda"><b>${stats.week}</b><span>nos próximos 7 dias</span></a>
                 <a class="stat tone-moss" href="#/agenda"><b>${stats.confirmed}</b><span>${stats.confirmed === 1 ? 'presença confirmada' : 'presenças confirmadas'}</span></a>
-                <a class="stat tone-clay" href="#/agenda"><b>${stats.docs}</b><span>${stats.docs === 1 ? 'documento pendente' : 'documentos pendentes'}</span></a>
+                <a class="stat tone-clay" href="#/impacto"><b>${stats.completed}</b><span>${stats.completed === 1 ? 'concluído este mês' : 'concluídos este mês'}</span></a>
             </section>
 
             ${canCreate ? `<a class="btn btn-primary btn-block rise" style="margin-top:14px" href="#/atendimentos/novo">${icon('plus')}Novo atendimento</a>` : ''}

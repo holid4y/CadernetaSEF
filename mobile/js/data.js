@@ -2,7 +2,7 @@ export const PROJECT = {
     kicker: 'Sustentabilidade',
     name: 'Econômica e Financeira',
     title: 'Agenda de atendimentos',
-    place: 'Universidade Feevale, salas parceiras (como a Sala do Empreendedor de Campo Bom) e on-line',
+    place: 'Sala 105, Campus II da Universidade Feevale, ou on-line',
     coordinator: 'Profa. Maristela Mercedes Bauer',
     // From the paper agenda sheet. Confirm the area code.
     email: 'projetosustentabilidade@feevale.br',
@@ -37,6 +37,9 @@ export const TRANSITIONS = {
 
 export const BLOCKING = ['scheduled', 'confirmed', 'in_progress'];
 
+// Where the project sees people unless the booking says otherwise.
+export const DEFAULT_PLACE = 'Sala 105, Campus II';
+
 export const LOCATION_TYPES = {
     on_campus: 'Na universidade',
     external: 'Externo',
@@ -46,7 +49,11 @@ export const LOCATION_TYPES = {
 export const CLIENT_TYPES = {
     individual: 'Pessoa física',
     organization: 'Pessoa jurídica',
+    ngo: 'ONG',
 };
+
+// Companies and NGOs are registered by CNPJ and corporate name.
+export const isLegalEntity = (type) => type === 'organization' || type === 'ngo';
 
 export const MAX_APPOINTMENT_HOURS = 8;
 
@@ -163,4 +170,3 @@ export const CATALOG = [
 ];
 
 export const MEI_SERVICE = 'atendimento-mei';
-export const THIRD_SECTOR_CATEGORY = 'terceiro-setor';

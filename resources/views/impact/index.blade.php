@@ -1,9 +1,10 @@
 @php
     $rate = $data['attendance_rate'] === null ? '—' : round($data['attendance_rate'] * 100).'%';
-    $people = $data['individuals'] + $data['organizations'];
-    $individualShare = $people > 0 ? round($data['individuals'] / $people * 100) : 0;
+    $kinds = [['Pessoa física', $data['individuals'], 'bg-primary'], ['Pessoa jurídica', $data['organizations'], 'bg-ochre'], ['ONG', $data['ngos'], 'bg-moss']];
+    $people = max(1, $data['individuals'] + $data['organizations'] + $data['ngos']);
     $busiestMonth = max(1, ...array_column($data['people_by_month'], 'count'));
-    $query = array_filter(['periodo' => $period, 'de' => request('de'), 'ate' => request('ate')]);
+    $typeKey = array_search($type, App\Http\Requests\ImpactRequest::TYPES, true) ?: null;
+    $query = array_filter(['periodo' => $period, 'de' => request('de'), 'ate' => request('ate'), 'tipo' => $typeKey]);
 @endphp
 
 <x-app-layout>
@@ -18,7 +19,7 @@
 
         <div class="flex flex-wrap items-center gap-2" role="group" aria-label="Período">
             @foreach (App\Http\Requests\ImpactRequest::PERIODS as $value => $label)
-                <a href="{{ route('impact', ['periodo' => $value]) }}" wire:navigate @class([
+                <a href="{{ route('impact', array_filter(['periodo' => $value, 'tipo' => $typeKey])) }}" wire:navigate @class([
                     'press inline-flex min-h-11 items-center rounded-full px-4 text-sm font-semibold',
                     'bg-primary text-on-primary' => $period === $value,
                     'border border-line bg-surface text-ink hover:bg-sunken' => $period !== $value,
@@ -26,9 +27,22 @@
             @endforeach
         </div>
 
+        <div class="flex flex-wrap items-center gap-2" role="group" aria-label="Atendidos">
+            @foreach ([null => 'Todos'] + array_map(fn ($clientType) => $clientType->label(), App\Http\Requests\ImpactRequest::TYPES) as $value => $label)
+                <a href="{{ route('impact', array_filter([...$query, 'tipo' => $value ?: null])) }}" wire:navigate @class([
+                    'press inline-flex min-h-11 items-center rounded-full px-4 text-sm font-semibold',
+                    'bg-ink text-surface' => $typeKey === ($value ?: null),
+                    'border border-line bg-surface text-ink-muted hover:bg-sunken' => $typeKey !== ($value ?: null),
+                ]) @if ($typeKey === ($value ?: null)) aria-current="true" @endif>{{ $label }}</a>
+            @endforeach
+        </div>
+
         @if ($period === 'datas')
             <form method="GET" action="{{ route('impact') }}" class="flex flex-wrap items-end gap-3">
                 <input type="hidden" name="periodo" value="datas">
+                @if ($typeKey)
+                    <input type="hidden" name="tipo" value="{{ $typeKey }}">
+                @endif
                 <div>
                     <x-input-label for="impact-from" value="De" />
                     <x-text-input id="impact-from" name="de" type="date" :value="$from->format('Y-m-d')" class="mt-1 block" />
@@ -66,14 +80,20 @@
             </x-card>
 
             <x-card class="space-y-4">
-                <h2 class="text-2xl">Pessoa física e jurídica</h2>
-                <div class="flex h-3 overflow-hidden rounded-full bg-ochre" role="img" aria-label="{{ $data['individuals'] }} pessoas físicas e {{ $data['organizations'] }} pessoas jurídicas">
-                    <span class="h-full bg-primary" style="width: {{ $individualShare }}%"></span>
+                <h2 class="text-2xl">Quem foi atendido</h2>
+                <div class="flex h-3 overflow-hidden rounded-full bg-sunken" role="img" aria-label="{{ collect($kinds)->map(fn ($kind) => $kind[0].': '.$kind[1])->implode(', ') }}">
+                    @foreach ($kinds as [, $count, $color])
+                        <span class="h-full {{ $color }}" style="width: {{ round($count / $people * 100, 1) }}%"></span>
+                    @endforeach
                 </div>
-                <p class="text-sm text-ink-muted">Pessoa física: <b class="text-ink">{{ $data['individuals'] }}</b> · Pessoa jurídica: <b class="text-ink">{{ $data['organizations'] }}</b></p>
+                <ul class="flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-muted">
+                    @foreach ($kinds as [$label, $count, $color])
+                        <li class="inline-flex items-center gap-1.5"><span class="size-2.5 rounded-full {{ $color }}" aria-hidden="true"></span>{{ $label }}: <b class="text-ink">{{ $count }}</b></li>
+                    @endforeach
+                </ul>
                 <div class="grid grid-cols-2 gap-3">
                     <x-stat-tile :value="$data['mei']" label="atendimentos de MEI" tone="clay" />
-                    <x-stat-tile :value="$data['third_sector']" label="ONGs e terceiro setor" tone="moss" />
+                    <x-stat-tile :value="$data['ngos']" label="atendimentos de ONGs (terceiro setor)" tone="moss" />
                 </div>
             </x-card>
 

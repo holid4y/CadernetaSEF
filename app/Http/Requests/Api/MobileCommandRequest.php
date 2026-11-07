@@ -20,6 +20,7 @@ class MobileCommandRequest extends FormRequest
         'setServiceActive',
         'addServiceDocument',
         'removeServiceDocument',
+        'deleteService',
         'dismissGoogleEvent',
     ];
 

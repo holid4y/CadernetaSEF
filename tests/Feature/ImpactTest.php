@@ -28,7 +28,7 @@ class ImpactTest extends TestCase
     public function test_the_web_shows_the_same_indicators_as_the_app(): void
     {
         $joana = Client::factory()->create(['type' => ClientType::Individual]);
-        $ong = Client::factory()->create(['type' => ClientType::Organization]);
+        $ong = Client::factory()->create(['type' => ClientType::Ngo]);
         $irpf = Service::factory()->create(['name' => 'IRPF']);
         $mei = Service::factory()->create(['slug' => 'atendimento-mei', 'name' => 'Atendimento MEI']);
         $accounts = Service::factory()->for(ServiceCategory::factory()->create(['slug' => 'terceiro-setor']), 'category')->create(['name' => 'Prestação de contas']);
@@ -45,7 +45,7 @@ class ImpactTest extends TestCase
 
         $this->assertSame([5, 3, 2], [$data['total'], $data['status']['completed'], $data['unique_clients']]);
         $this->assertSame(0.75, $data['attendance_rate']);
-        $this->assertSame([3, 1, 1, 1], [$data['individuals'], $data['organizations'], $data['mei'], $data['third_sector']]);
+        $this->assertSame([3, 0, 1, 1], [$data['individuals'], $data['organizations'], $data['ngos'], $data['mei']]);
         $this->assertSame(['name' => 'IRPF', 'count' => 2], $data['demands'][0]);
         $this->assertSame([['key' => '2026-08', 'count' => 0], ['key' => '2026-09', 'count' => 1], ['key' => '2026-10', 'count' => 1]],
             array_map(fn (array $month): array => ['key' => $month['key'], 'count' => $month['count']], $data['people_by_month']));
@@ -79,6 +79,32 @@ class ImpactTest extends TestCase
         $this->assertStringStartsWith("\u{FEFF}\"Indicador\";\"Valor\"\r\n", $csv);
         $this->assertStringContainsString('"\'=HYPERLINK(""https://evil.example"",""x"")";"1"', $csv);
         $this->assertSame('attachment; filename="impacto-2026-10-01-a-2026-10-31.csv"', $response->headers->get('Content-Disposition'));
+    }
+
+    public function test_the_numbers_can_be_narrowed_to_one_type_of_client(): void
+    {
+        $service = Service::factory()->create(['name' => 'IRPF']);
+        $this->appointment(Client::factory()->create(['type' => ClientType::Individual]), $service, '2026-10-05 13:00', AppointmentStatus::Completed);
+        $this->appointment(Client::factory()->organization()->create(), $service, '2026-10-06 13:00', AppointmentStatus::Completed);
+        $this->appointment(Client::factory()->create(['type' => ClientType::Ngo]), $service, '2026-10-07 13:00', AppointmentStatus::Completed);
+        $this->appointment(Client::factory()->create(['type' => ClientType::Ngo]), $service, '2026-10-08 13:00', AppointmentStatus::Scheduled);
+        $this->actingAs(User::factory()->viewer()->create());
+
+        $all = $this->get(route('impact'))->viewData('data');
+        $page = $this->get(route('impact', ['tipo' => 'ong']))->assertOk();
+        $ngos = $page->viewData('data');
+
+        $this->assertMatchesRegularExpression('/aria-current="true"\s*>ONG</', $page->getContent());
+
+        $this->assertSame([4, 1, 1, 2], [$all['total'], $all['individuals'], $all['organizations'], $all['ngos']]);
+        $this->assertSame([2, 0, 0, 2, 1], [$ngos['total'], $ngos['individuals'], $ngos['organizations'], $ngos['ngos'], $ngos['unique_clients']]);
+
+        $export = $this->get(route('impact.export', ['periodo' => 'mes', 'tipo' => 'ong']))->assertOk();
+        $this->assertStringContainsString('"Atendidos";"ONG"', $export->getContent());
+        $this->assertStringContainsString('"Total de atendimentos";"2"', $export->getContent());
+        $this->assertSame('attachment; filename="impacto-ong-2026-10-01-a-2026-10-31.csv"', $export->headers->get('Content-Disposition'));
+
+        $this->get(route('impact', ['tipo' => 'empresa']))->assertSessionHasErrors('tipo');
     }
 
     public function test_guests_are_sent_to_the_login(): void

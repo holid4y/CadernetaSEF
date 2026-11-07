@@ -24,7 +24,6 @@ class AgendaEventResource extends JsonResource
                 'service' => $this->service->name,
                 'responsible' => $this->responsible->name,
                 'status' => $this->status->label(),
-                'pendingDocuments' => $this->pending_documents_count,
             ],
         ];
     }

@@ -72,6 +72,7 @@ class AppointmentAuthorizationTest extends TestCase
 
         $this->assertTrue(User::factory()->admin()->create()->can('update', $service));
         $this->assertFalse(User::factory()->create()->can('update', $service));
-        $this->assertFalse(User::factory()->admin()->create()->can('delete', $service));
+        $this->assertTrue(User::factory()->admin()->create()->can('delete', $service));
+        $this->assertFalse(User::factory()->create()->can('delete', $service));
     }
 }

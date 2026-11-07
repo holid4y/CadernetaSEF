@@ -72,6 +72,19 @@ class CreateAppointmentTest extends TestCase
         $this->assertCount(1, $appointment->documents);
     }
 
+    public function test_appointments_at_the_university_start_in_room_105(): void
+    {
+        Livewire::test(CreateAppointment::class, ['start' => '2026-10-05T14:00:00'])
+            ->assertSet('location', 'Sala 105, Campus II')
+            ->set('location_type', 'remote')
+            ->assertSet('location', '')
+            ->set('location_type', 'on_campus')
+            ->assertSet('location', 'Sala 105, Campus II')
+            ->set('location', 'Sala 210')
+            ->set('location_type', 'external')
+            ->assertSet('location', 'Sala 210');
+    }
+
     public function test_choosing_a_service_suggests_its_duration(): void
     {
         $service = Service::factory()->create(['default_duration_minutes' => 90]);

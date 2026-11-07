@@ -2,6 +2,7 @@
     $canUpdate = auth()->user()->can('update', $appointment);
     $documents = $appointment->documents;
     $received = $documents->filter->isReceived()->count();
+    $documentsDue = $appointment->documentsAreDue();
     $formAction = App\Support\FormLinks::action($appointment, $canUpdate);
 @endphp
 
@@ -143,6 +144,10 @@
                 @if ($documents->isEmpty())
                     <p class="mt-4 text-sm text-ink-muted">{{ __('appointments.show.documents_empty') }}</p>
                 @else
+                    @if ($canUpdate && ! $documentsDue)
+                        <p class="mt-2 text-sm text-ink-muted">{{ __('appointments.show.documents_on_the_day') }}</p>
+                    @endif
+
                     <div class="mt-4 h-2 overflow-hidden rounded-full bg-moss-soft" aria-hidden="true">
                         <div class="h-full rounded-full bg-moss transition-[width] duration-500 ease-out" style="width: {{ round($received / $documents->count() * 100) }}%"></div>
                     </div>
@@ -150,7 +155,7 @@
                     <ul class="-mx-3 mt-4 space-y-1">
                         @foreach ($documents as $document)
                             <li wire:key="document-{{ $document->id }}" x-data="{ received: @js($document->isReceived()) }">
-                                @if ($canUpdate)
+                                @if ($canUpdate && $documentsDue)
                                     <button type="button" role="checkbox"
                                             x-bind:aria-checked="received.toString()"
                                             x-on:click="received = ! received; $wire.markDocument({{ $document->id }}, received)"

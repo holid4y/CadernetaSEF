@@ -237,7 +237,7 @@ class MobileCommandTest extends TestCase
 
     public function test_documents_end_in_the_state_the_person_chose(): void
     {
-        $appointment = Appointment::factory()->create();
+        $appointment = Appointment::factory()->today()->create();
         $document = $appointment->documents()->create(['name' => 'CPF', 'sort_order' => 0]);
 
         $this->command('toggleDocument', [$appointment->id, $document->id, true])->assertOk()->assertJsonPath('result.id', $document->id);
@@ -245,6 +245,17 @@ class MobileCommandTest extends TestCase
         $this->assertNotNull($document->fresh()->received_at);
 
         $this->command('toggleDocument', [$appointment->id, $document->id])->assertOk()->assertJsonPath('result.receivedAt', null);
+    }
+
+    public function test_documents_of_a_later_appointment_wait_for_its_day(): void
+    {
+        $appointment = Appointment::factory()->create();
+        $document = $appointment->documents()->create(['name' => 'CPF', 'sort_order' => 0]);
+
+        $this->command('toggleDocument', [$appointment->id, $document->id, true])
+            ->assertUnprocessable()
+            ->assertJsonPath('message', 'Os documentos são conferidos no dia do atendimento, quando a pessoa traz.');
+        $this->assertNull($document->fresh()->received_at);
     }
 
     public function test_a_document_of_another_appointment_is_not_found(): void
@@ -379,7 +390,26 @@ class MobileCommandTest extends TestCase
         Service::factory()->create(['slug' => 'irpf']);
 
         $this->command('setServiceActive', ['irpf', false])->assertForbidden();
+        $this->command('deleteService', ['irpf'])->assertForbidden();
         $this->assertTrue(Service::query()->sole()->active);
+    }
+
+    public function test_admins_delete_a_service_from_the_app_once_nothing_is_booked_with_it(): void
+    {
+        $service = Service::factory()->create(['slug' => 'irpf']);
+        $booked = Appointment::factory()->for($service)->create();
+        $this->actingAsMobile(User::factory()->admin()->create());
+
+        $this->command('deleteService', ['irpf'])
+            ->assertUnprocessable()
+            ->assertJsonPath('message', fn (string $message): bool => str_starts_with($message, 'Há 1 atendimento marcado com este serviço'));
+
+        $booked->delete();
+        $this->command('deleteService', ['irpf'])->assertOk()
+            ->assertJsonPath('state.services.0.slug', 'irpf')
+            ->assertJsonPath('state.services.0.deleted', true);
+        $this->assertSoftDeleted($service);
+        $this->command('deleteService', ['irpf'])->assertNotFound();
     }
 
     public function test_changes_from_the_app_are_audited_under_the_person(): void

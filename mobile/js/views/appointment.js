@@ -9,6 +9,7 @@ import {
     categoryOf,
     clientOf,
     describeActivity,
+    documentsAreDue,
     findConflict,
     conflictMessage,
     locationLabel,
@@ -98,6 +99,7 @@ export default function appointmentDetail({ params, state, user }) {
     const canWrite = can(user, 'appointments.write');
     const received = appointment.documents.filter((d) => d.receivedAt).length;
     const total = appointment.documents.length;
+    const canCheck = canWrite && documentsAreDue(appointment);
     const next = TRANSITIONS[appointment.status].filter((s) => s !== 'scheduled');
     const canReschedule = canWrite && ['scheduled', 'confirmed'].includes(appointment.status);
     const formButton = formAction(appointment, canWrite);
@@ -136,14 +138,15 @@ export default function appointmentDetail({ params, state, user }) {
             </section>
 
             <section class="card">
-                <div class="card-head"><h2>Documentos</h2><span class="muted small doc-count">${total ? `${received} de ${total} entregues` : ''}</span></div>
+                <div class="card-head"><h2>Documentos</h2><span class="muted small doc-count">${total ? `${received} de ${total} conferidos` : ''}</span></div>
                 ${
                     total
-                        ? `<div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="${total}" aria-valuenow="${received}"><i style="width:${(received / total) * 100}%"></i></div>
+                        ? `${canWrite && !canCheck ? '<p class="muted small">A pessoa traz os documentos no dia; marque o que ela trouxe durante o atendimento.</p>' : ''}
+                           <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="${total}" aria-valuenow="${received}"><i style="width:${(received / total) * 100}%"></i></div>
                            <div>${appointment.documents
                                .map(
-                                   (d) => `<button type="button" class="doc ${d.receivedAt ? 'is-done' : ''}" data-doc="${d.id}" role="checkbox" aria-checked="${Boolean(d.receivedAt)}" ${canWrite ? '' : 'disabled'}>
-                                        <span class="mark">${icon('check')}</span><span class="name">${esc(d.name)}</span><span class="state">${d.receivedAt ? 'Entregue' : 'Pendente'}</span></button>`,
+                                   (d) => `<button type="button" class="doc ${d.receivedAt ? 'is-done' : ''}" data-doc="${d.id}" role="checkbox" aria-checked="${Boolean(d.receivedAt)}" ${canCheck ? '' : 'disabled'}>
+                                        <span class="mark">${icon('check')}</span><span class="name">${esc(d.name)}</span><span class="state">${d.receivedAt ? 'Trouxe' : 'A conferir'}</span></button>`,
                                )
                                .join('')}</div>`
                         : '<p class="muted">Nenhum documento solicitado para este serviço.</p>'
@@ -182,10 +185,10 @@ export default function appointmentDetail({ params, state, user }) {
                         button.classList.toggle('is-done', done);
                         button.classList.toggle('just-done', done);
                         button.setAttribute('aria-checked', String(done));
-                        button.querySelector('.state').textContent = done ? 'Entregue' : 'Pendente';
+                        button.querySelector('.state').textContent = done ? 'Trouxe' : 'A conferir';
                         root.querySelector('.progress i').style.width = `${(count / total) * 100}%`;
                         root.querySelector('.progress').setAttribute('aria-valuenow', String(count));
-                        root.querySelector('.doc-count').textContent = `${count} de ${total} entregues`;
+                        root.querySelector('.doc-count').textContent = `${count} de ${total} conferidos`;
                     } catch (error) {
                         toast(error.message);
                     }
