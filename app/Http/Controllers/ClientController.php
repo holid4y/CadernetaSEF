@@ -20,6 +20,11 @@ class ClientController extends Controller
         return view('clients.create');
     }
 
+    public function import(): View
+    {
+        return view('clients.import');
+    }
+
     public function show(Client $client): View
     {
         return view('clients.show', [

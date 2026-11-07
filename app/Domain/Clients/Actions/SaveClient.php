@@ -29,10 +29,11 @@ final class SaveClient
      *     accepts_reminders?: bool,
      *     active?: bool,
      * }  $input
+     * @param  bool  $requireContact  false only when importing old records that came without one
      */
-    public function handle(?Client $client, array $input): Client
+    public function handle(?Client $client, array $input, bool $requireContact = true): Client
     {
-        $data = Validator::make($input, self::rules($client, $input['type'] ?? null), self::messages())->validate();
+        $data = Validator::make($input, self::rules($client, $input['type'] ?? null, $requireContact), self::messages())->validate();
         $organization = $data['type'] === ClientType::Organization->value;
 
         $client ??= new Client;
@@ -60,7 +61,7 @@ final class SaveClient
     /**
      * @return array<string, list<mixed>>
      */
-    public static function rules(?Client $client, mixed $type): array
+    public static function rules(?Client $client, mixed $type, bool $requireContact = true): array
     {
         return [
             'type' => ['required', Rule::enum(ClientType::class)],
@@ -71,7 +72,7 @@ final class SaveClient
                 new BrazilianDocument((is_string($type) ? ClientType::tryFrom($type) : null) ?? ClientType::Individual),
                 self::documentIsFree($client),
             ],
-            'phone' => ['bail', 'nullable', 'string', 'max:30', 'required_without:email', self::phoneHasDigits(...)],
+            'phone' => ['bail', 'nullable', 'string', 'max:30', ...($requireContact ? ['required_without:email'] : []), self::phoneHasDigits(...)],
             'email' => ['nullable', 'email', 'max:255'],
             'notes' => ['nullable', 'string', 'max:2000'],
             'accepts_reminders' => ['boolean'],

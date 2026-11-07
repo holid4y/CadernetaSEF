@@ -19,6 +19,9 @@
             <x-card class="space-y-4 self-start">
                 <h2 class="text-xl">{{ __('clients.show.contact') }}</h2>
                 <dl class="space-y-3 text-sm">
+                    @unless ($client->phone || $client->email)
+                        <div><dd class="rounded-soft bg-ochre-soft px-3 py-2 text-ochre">{{ __('clients.show.no_contact') }}</dd></div>
+                    @endunless
                     @if ($client->phone)
                         <div><dt class="text-ink-muted">{{ __('clients.fields.phone') }}</dt><dd class="text-ink">{{ $client->phone }}</dd></div>
                     @endif

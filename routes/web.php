@@ -69,6 +69,7 @@ Route::middleware('auth')->group(function () {
     Route::controller(ClientController::class)->group(function () {
         Route::get('/atendidos', 'index')->name('clients.index')->can('viewAny', Client::class);
         Route::get('/atendidos/novo', 'create')->name('clients.create')->can('create', Client::class);
+        Route::get('/atendidos/importar', 'import')->name('clients.import')->can('create', Client::class);
         Route::get('/atendidos/{client}', 'show')->name('clients.show')->can('view', 'client');
         Route::get('/atendidos/{client}/editar', 'edit')->name('clients.edit')->can('update', 'client');
     });

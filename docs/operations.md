@@ -71,6 +71,24 @@ diz onde. Leia o erro, decida entre corrigir ou restaurar o snapshot, e só ent�
 cd /var/www/caderneta-sef/current && sudo -u caderneta php artisan up
 ```
 
+## Importar atendidos de uma planilha
+
+Em Atendidos → Importar planilha (administradores e membros), envie o `.xlsx`
+ou o CSV que o projeto já usa. A primeira linha precisa ter os nomes das
+colunas; até 1000 atendidos por arquivo.
+
+- O sistema sugere o que é cada coluna pelo nome (CPF, BENEFICIADO, E-MAIL,
+  TELEFONE...). Endereço, segundo e-mail, telefone ilegível e o que não tiver
+  lugar próprio vão para as observações, com o nome da coluna.
+- CPF e CNPJ salvos como número no Excel recuperam o zero da frente. Telefone
+  sem DDD recebe o DDD padrão (51); celular antigo de oito dígitos ganha o 9.
+- A prévia mostra cada linha e o motivo das que não vão entrar (CPF/CNPJ
+  inválido, já cadastrado, repetido na planilha). Nada é gravado antes de
+  clicar em Importar, e o mesmo arquivo não entra duas vezes.
+- Quem vier sem telefone nem e-mail entra marcado “Sem contato” e não recebe
+  lembretes até alguém completar o cadastro. Lembretes também começam
+  desligados para todos os importados: a planilha não registra consentimento.
+
 ## Contas
 
 Não há cadastro público nem tela de administração de usuários: as contas são

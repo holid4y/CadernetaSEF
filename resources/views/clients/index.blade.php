@@ -3,6 +3,7 @@
         <x-page-header :title="__('clients.index.title')" :subtitle="__('clients.index.subtitle')">
             @can('create', App\Models\Client::class)
                 <x-slot name="actions">
+                    <x-button-link :href="route('clients.import')" variant="secondary">{{ __('clients.index.import') }}</x-button-link>
                     <x-button-link :href="route('clients.create')">{{ __('clients.index.new') }}</x-button-link>
                 </x-slot>
             @endcan

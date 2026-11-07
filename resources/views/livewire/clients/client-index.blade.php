@@ -22,6 +22,9 @@
                                     @unless ($client->active)
                                         <span class="shrink-0 rounded-full bg-bark-soft px-2 py-0.5 text-xs text-bark">{{ __('clients.index.inactive') }}</span>
                                     @endunless
+                                    @unless ($client->phone || $client->email)
+                                        <span class="shrink-0 rounded-full bg-ochre-soft px-2 py-0.5 text-xs text-ochre">{{ __('clients.index.no_contact') }}</span>
+                                    @endunless
                                 </span>
                                 <span class="block truncate text-sm text-ink-muted">{{ collect([$client->type->label(), $client->phone, $client->email])->filter()->implode(' · ') }}</span>
                                 <span class="mt-1 block text-xs text-ink-muted sm:hidden">{{ trans_choice('clients.index.appointments_count', $client->appointments_count) }}</span>
