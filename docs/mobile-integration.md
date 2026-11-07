@@ -61,6 +61,10 @@ web ── sessão + CSRF ──────────────────
   origem).
 - `google` é a conexão de quem está logado e `googleEvents` são os eventos do
   Google esperando atendido e serviço ([google-calendar.md](google-calendar.md)).
+- `settings.reminderDays` é quantos dias antes o lembrete sai; muda em
+  Configurações, na web.
+- `service.deleted` marca serviços excluídos do catálogo, que continuam no
+  histórico dos atendimentos que os usaram.
 
 O que não sai do servidor:
 
@@ -123,11 +127,12 @@ desfazer entra no histórico como uma mudança de status.
 - Agendar trava a linha do responsável. Reagendar, mudar status e desfazer
   travam a linha do atendimento e releem o status salvo. Dois pedidos
   simultâneos esperam um pelo outro.
-- A *exclusion constraint* `appointments_no_overlap` continua no banco como
-  última barreira. Se ela recusar, a API responde 409.
-- `tests/Feature/ConcurrentChangesTest.php` dispara 6 processos ao mesmo tempo,
-  cada um com sua conexão: só um agendamento ocupa o horário, e a mesma
-  cancelação feita por seis pessoas entra uma vez no histórico. Sem o lock na
+- Um responsável atende até 5 pessoas ao mesmo tempo
+  (`EnsureResponsibleIsAvailable::MAX_PARALLEL`). A contagem roda com a linha
+  dele travada; o sexto agendamento no mesmo horário recebe 409.
+- `tests/Feature/ConcurrentChangesTest.php` dispara 7 processos ao mesmo tempo,
+  cada um com sua conexão: só 5 agendamentos ocupam o horário, e a mesma
+  cancelação feita por sete pessoas entra uma vez no histórico. Sem o lock na
   mudança de status, as seis passavam (corrigido também para a web).
 
 ## Erros

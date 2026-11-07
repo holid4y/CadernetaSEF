@@ -19,7 +19,7 @@ final class ReminderMessage
 
     public static function subject(Appointment $appointment): string
     {
-        return __('reminders.subject', ['date' => self::start($appointment)->translatedFormat('d/m')]);
+        return __('reminders.subject', ['date' => self::localStart($appointment)->translatedFormat('d/m')]);
     }
 
     /**
@@ -27,7 +27,7 @@ final class ReminderMessage
      */
     public static function lines(Appointment $appointment): array
     {
-        $start = self::start($appointment);
+        $start = self::localStart($appointment);
         $documents = $appointment->documents->pluck('name');
 
         return array_values(array_filter([
@@ -62,10 +62,9 @@ final class ReminderMessage
             '',
             __('reminders.respond_prompt').' '.self::responseUrl($appointment),
         ]);
-
     }
 
-    private static function start(Appointment $appointment): Carbon
+    public static function localStart(Appointment $appointment): Carbon
     {
         return DisplayTimezone::toLocal($appointment->starts_at);
     }

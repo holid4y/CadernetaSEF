@@ -63,6 +63,7 @@ class MobileStateTest extends TestCase
             'documents' => ['Informe de rendimentos', 'Recibo da última declaração'],
         ], $state['services'][0]);
 
+        $this->assertSame(['reminderDays' => 2], $state['settings']);
         $this->assertSame('52998224725', $state['clients'][0]['document']);
         $this->assertSame(Carbon::parse('2026-10-05 12:00')->getTimestampMs(), $state['clients'][0]['consentAt']);
 

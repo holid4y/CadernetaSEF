@@ -5,6 +5,7 @@ import {
     isLegalEntity,
     LOCATION_TYPES,
     MAX_APPOINTMENT_HOURS,
+    MAX_PARALLEL,
     ROLES,
     STATUS,
     TRANSITIONS,
@@ -55,19 +56,29 @@ const log = (state, appointment, type, actor, at, old = null, next = null) => {
 
 export const isBlocking = (appointment) => BLOCKING.includes(appointment.status);
 
-/** Two periods overlap when new_start < existing_end AND new_end > existing_start. */
-export const findConflict = (state, { responsibleId, start, end, ignoreId = null }) =>
-    state.appointments.find(
-        (a) =>
-            a.id !== ignoreId &&
-            a.responsibleId === responsibleId &&
-            isBlocking(a) &&
-            start < a.end &&
-            end > a.start,
-    ) ?? null;
+/**
+ * The first stretch of the period in which the responsible already has
+ * MAX_PARALLEL appointments running at once, or null when there is room.
+ * Same rule as EnsureResponsibleIsAvailable on the server.
+ */
+export const findConflict = (state, { responsibleId, start, end, ignoreId = null }) => {
+    const overlapping = state.appointments.filter(
+        (a) => a.id !== ignoreId && a.responsibleId === responsibleId && isBlocking(a) && start < a.end && end > a.start,
+    );
+    if (overlapping.length < MAX_PARALLEL) return null;
+
+    const times = [...new Set([start, end, ...overlapping.flatMap((a) => [Math.max(start, a.start), Math.min(end, a.end)])])].sort((x, y) => x - y);
+    let full = null;
+    for (let i = 0; i < times.length - 1; i++) {
+        const running = overlapping.filter((a) => a.start <= times[i] && a.end > times[i]).length;
+        if (running >= MAX_PARALLEL) full = { responsibleId, start: full?.start ?? times[i], end: times[i + 1] };
+        else if (full) break;
+    }
+    return full;
+};
 
 export const conflictMessage = (state, conflict) =>
-    `${userOf(state, conflict.responsibleId).name} já tem atendimento das ${timeStr(conflict.start)} às ${timeStr(conflict.end)}. Escolha outro horário ou outro responsável.`;
+    `${userOf(state, conflict.responsibleId).name} já tem ${MAX_PARALLEL} atendimentos ao mesmo tempo das ${timeStr(conflict.start)} às ${timeStr(conflict.end)}. Escolha outro horário ou outro responsável.`;
 
 export const busyOn = (state, responsibleId, key, ignoreId = null) =>
     state.appointments

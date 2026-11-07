@@ -60,9 +60,14 @@ test('changing the service checklist later does not rewrite existing appointment
     assert.equal(next.documents.length, 8);
 });
 
-test('blocks overlapping appointments for the same responsible', () => {
+// Fills the 09:00–10:00 slot of the responsible with five appointments.
+const fill = (state, admin) => {
+    for (let i = 0; i < 5; i++) scheduleAppointment(state, admin, input(state), NOW);
+};
+
+test('a sixth appointment at the same time is refused, in any overlap', () => {
     const { state, admin } = fresh();
-    scheduleAppointment(state, admin, input(state), NOW);
+    fill(state, admin);
 
     const attempts = {
         partial: slot('09:30', '10:30'),
@@ -76,14 +81,24 @@ test('blocks overlapping appointments for the same responsible', () => {
     }
 });
 
-test('conflict message names the person and the busy period', () => {
+test('conflict message names the person and the full stretch', () => {
     const { state, admin } = fresh();
-    scheduleAppointment(state, admin, input(state), NOW);
+    fill(state, admin);
 
     assert.throws(
         () => scheduleAppointment(state, admin, input(state, slot('09:30', '10:30')), NOW),
-        /Membro da Equipe já tem atendimento das 09:00 às 10:00\. Escolha outro horário ou outro responsável\./,
+        /Membro da Equipe já tem 5 atendimentos ao mesmo tempo das 09:30 às 10:00\. Escolha outro horário ou outro responsável\./,
     );
+});
+
+test('up to five run at once, and only those at the same moment count', () => {
+    const { state, admin } = fresh();
+    for (let i = 0; i < 3; i++) scheduleAppointment(state, admin, input(state), NOW);
+    for (let i = 0; i < 3; i++) scheduleAppointment(state, admin, input(state, slot('10:00', '11:00')), NOW);
+
+    scheduleAppointment(state, admin, input(state, slot('09:00', '11:00')), NOW);
+    scheduleAppointment(state, admin, input(state), NOW);
+    assert.throws(() => scheduleAppointment(state, admin, input(state, slot('09:30', '09:45')), NOW), /5 atendimentos ao mesmo tempo/);
 });
 
 test('allows adjacent periods and different responsibles', () => {
@@ -100,6 +115,8 @@ test('cancelled and no-show appointments do not block the slot', () => {
     const first = scheduleAppointment(state, admin, input(state), NOW);
     changeStatus(state, admin, first.id, 'cancelled', NOW);
 
+    fill(state, admin);
+    changeStatus(state, admin, state.appointments.at(-1).id, 'no_show', NOW);
     assert.equal(findConflict(state, { responsibleId: 2, ...slot('09:00', '10:00') }), null);
     scheduleAppointment(state, admin, input(state), NOW);
 });
@@ -162,10 +179,11 @@ test('rescheduling keeps history and validates conflicts against others only', (
     const { state, admin } = fresh();
     const first = scheduleAppointment(state, admin, input(state), NOW);
     const second = scheduleAppointment(state, admin, input(state, slot('11:00', '12:00')), NOW);
+    for (let i = 0; i < 4; i++) scheduleAppointment(state, admin, input(state, slot('11:00', '12:00')), NOW);
 
     // Moving onto itself is not a conflict.
     rescheduleAppointment(state, admin, first.id, { ...slot('09:30', '10:30'), responsibleId: 2 }, NOW);
-    assert.throws(() => rescheduleAppointment(state, admin, first.id, { ...slot('11:30', '12:30'), responsibleId: 2 }, NOW), /já tem atendimento/);
+    assert.throws(() => rescheduleAppointment(state, admin, first.id, { ...slot('11:30', '12:30'), responsibleId: 2 }, NOW), /5 atendimentos ao mesmo tempo/);
 
     rescheduleAppointment(state, admin, second.id, { ...slot('11:00', '12:00'), responsibleId: 4 }, NOW);
     assert.deepEqual(first.activities.map((a) => a.type), ['created', 'rescheduled']);

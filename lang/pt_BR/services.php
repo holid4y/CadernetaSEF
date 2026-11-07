@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 return [
     'title' => 'Serviços',
-    'subtitle' => 'Demandas que a equipe pode agendar e os documentos que cada uma pede.',
+    'page_title' => 'Configurações',
+    'page_subtitle' => 'Lembretes por e-mail e as demandas que a equipe pode agendar, com os documentos de cada uma.',
     'new' => 'Novo serviço',
     'edit' => 'Editar',
     'inactive' => 'Desativado',

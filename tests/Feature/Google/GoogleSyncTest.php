@@ -191,7 +191,7 @@ class GoogleSyncTest extends TestCase
         $account = $this->connected($ana, null, source: 'sef');
         $this->fakeSource([$this->googleEvent('original', '2026-10-06T15:00:00-03:00', '2026-10-06T16:00:00-03:00')]);
         $appointment = $this->linkedAppointment($account, $ana);
-        Appointment::factory()->for($ana, 'responsible')->between('2026-10-06 18:00', '2026-10-06 19:00')->create();
+        Appointment::factory()->count(5)->for($ana, 'responsible')->between('2026-10-06 18:00', '2026-10-06 19:00')->create();
 
         $this->artisan('google:pull');
 

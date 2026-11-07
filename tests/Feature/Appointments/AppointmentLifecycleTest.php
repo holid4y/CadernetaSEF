@@ -132,7 +132,7 @@ class AppointmentLifecycleTest extends TestCase
     {
         $appointment = $this->schedule();
         $busy = User::factory()->create();
-        Appointment::factory()->for($busy, 'responsible')->between('2026-10-05 13:30', '2026-10-05 14:30')->create();
+        Appointment::factory()->count(5)->for($busy, 'responsible')->between('2026-10-05 13:30', '2026-10-05 14:30')->create();
 
         $this->expectException(ValidationException::class);
 

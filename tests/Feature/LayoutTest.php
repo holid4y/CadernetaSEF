@@ -12,6 +12,17 @@ class LayoutTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_every_page_has_the_project_icon(): void
+    {
+        $this->get('/login')
+            ->assertSee('<link rel="icon" href="'.asset('favicon.svg').'" type="image/svg+xml">', escape: false)
+            ->assertSee('<link rel="apple-touch-icon" href="'.asset('apple-touch-icon.png').'">', escape: false);
+
+        foreach (['favicon.ico', 'favicon.svg', 'apple-touch-icon.png'] as $file) {
+            $this->assertGreaterThan(0, filesize(public_path($file)), $file);
+        }
+    }
+
     public function test_the_theme_is_decided_before_the_stylesheet_loads(): void
     {
         $html = $this->get('/login')->assertOk()->getContent();

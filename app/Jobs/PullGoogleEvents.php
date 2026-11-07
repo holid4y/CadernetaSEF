@@ -14,7 +14,6 @@ use App\Models\GoogleEvent;
 use Carbon\Exceptions\InvalidFormatException;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Support\Carbon;
@@ -171,12 +170,6 @@ final class PullGoogleEvents implements ShouldBeUnique, ShouldQueue
             $reschedule->handle($account->user, $appointment, $event->starts_at, $event->ends_at);
         } catch (ValidationException $error) {
             return mb_substr((string) collect($error->errors())->flatten()->first(), 0, 255);
-        } catch (QueryException $error) {
-            if ($error->getCode() !== '23P01') {
-                throw $error;
-            }
-
-            return __('appointments.errors.slot_taken');
         }
 
         return null;

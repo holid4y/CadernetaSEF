@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Domain\Appointments\Actions\EnsureResponsibleIsAvailable;
 use App\Domain\Appointments\Enums\AppointmentStatus;
 use App\Models\Appointment;
 use App\Models\Client;
@@ -20,7 +21,7 @@ use Tests\TestCase;
 // same moment into a throwaway database next to the test database.
 class ConcurrentChangesTest extends TestCase
 {
-    private const CONTENDERS = 6;
+    private const CONTENDERS = 7;
 
     private string $database;
 
@@ -52,7 +53,7 @@ class ConcurrentChangesTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_only_one_of_several_simultaneous_bookings_takes_the_slot(): void
+    public function test_simultaneous_bookings_stop_at_the_limit_of_the_responsible(): void
     {
         $responsible = User::factory()->create();
         $service = Service::factory()->create();
@@ -60,9 +61,9 @@ class ConcurrentChangesTest extends TestCase
 
         $results = $this->race(fn (int $turn): array => ['book', $responsible->id, $clients[$turn]->id, $service->id]);
 
-        $this->assertSame(1, $results['saved'] ?? 0, json_encode($results));
-        $this->assertSame(self::CONTENDERS - 1, $results['refused:409'] ?? 0, json_encode($results));
-        $this->assertSame(1, Appointment::query()->count());
+        $this->assertSame(EnsureResponsibleIsAvailable::MAX_PARALLEL, $results['saved'] ?? 0, json_encode($results));
+        $this->assertSame(self::CONTENDERS - EnsureResponsibleIsAvailable::MAX_PARALLEL, $results['refused:409'] ?? 0, json_encode($results));
+        $this->assertSame(EnsureResponsibleIsAvailable::MAX_PARALLEL, Appointment::query()->count());
     }
 
     public function test_the_same_cancellation_from_several_people_is_recorded_once(): void

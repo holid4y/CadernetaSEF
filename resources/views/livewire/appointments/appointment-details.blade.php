@@ -183,12 +183,12 @@
                     <h2 class="text-2xl">{{ __('reminders.card.title') }}</h2>
                     <p class="mt-2 text-sm text-ink-muted">
                         {{ match (true) {
-                            ! $appointment->client->active => __('reminders.card.inactive_client'),
+                            ! $appointment->client->active => __('reminders.errors.inactive'),
                             ! $appointment->client->accepts_reminders => __('reminders.card.no_consent'),
                             $appointment->reminder_sent_at !== null => __('reminders.card.sent_at', ['date' => App\Support\DisplayTimezone::toLocal($appointment->reminder_sent_at)->format('d/m \à\s H:i')]),
                             ! config('mail.reminders_enabled') => __('reminders.errors.disabled'),
                             App\Support\ContactLinks::email($appointment->client->email) === null => __('reminders.card.no_email'),
-                            default => __('reminders.card.scheduled'),
+                            default => trans_choice('reminders.card.scheduled', App\Domain\Appointments\ReminderSchedule::daysBefore(), ['count' => App\Domain\Appointments\ReminderSchedule::daysBefore()]),
                         } }}
                     </p>
 

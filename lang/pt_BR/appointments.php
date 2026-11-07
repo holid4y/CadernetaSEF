@@ -38,7 +38,7 @@ return [
     'errors' => [
         'invalid_period' => 'O horário final precisa ser depois do horário inicial.',
         'too_long' => 'Um atendimento pode durar no máximo :hours horas.',
-        'conflict' => ':name já tem atendimento das :start às :end. Escolha outro horário ou outro responsável.',
+        'full' => ':name já tem :max atendimentos ao mesmo tempo das :start às :end. Escolha outro horário ou outro responsável.',
         'inactive_service' => 'Este serviço foi desativado e não pode ser usado em novos atendimentos.',
         'deleted_service' => 'Este serviço foi excluído do catálogo e não pode ser usado em novos atendimentos.',
         'details_required' => 'Descreva a demanda para o serviço ":service".',
@@ -47,7 +47,6 @@ return [
         'not_editable' => 'Só é possível alterar horário ou responsável de atendimentos agendados ou confirmados.',
         'undo_unavailable' => 'Não é mais possível desfazer: o atendimento mudou depois disso. Atualize os dados.',
         'stale' => 'Este atendimento foi alterado por outra pessoa. Atualize os dados e tente de novo.',
-        'slot_taken' => 'Este horário acabou de ser ocupado. Atualize os dados e escolha outro horário.',
         'documents_on_the_day' => 'Os documentos são conferidos no dia do atendimento, quando a pessoa traz.',
     ],
 

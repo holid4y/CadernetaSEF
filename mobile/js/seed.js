@@ -97,6 +97,7 @@ export function buildSeed(now = Date.now()) {
         services: buildCatalog(),
         appointments: [],
         counters: {},
+        settings: { reminderDays: 2 },
         meta: { seededOn: dayKey(now), edited: false },
     };
 

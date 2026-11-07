@@ -115,7 +115,7 @@ class AgendaTest extends TestCase
     {
         $member = User::factory()->create(['name' => 'Maria']);
         $appointment = Appointment::factory()->for($member, 'responsible')->between('2026-10-05 13:00', '2026-10-05 14:00')->create();
-        Appointment::factory()->for($member, 'responsible')->between('2026-10-06 13:00', '2026-10-06 14:00')->create();
+        Appointment::factory()->count(5)->for($member, 'responsible')->between('2026-10-06 13:00', '2026-10-06 14:00')->create();
 
         $this->actingAs($member)
             ->patchJson("/atendimentos/{$appointment->id}/horario", [
@@ -123,7 +123,7 @@ class AgendaTest extends TestCase
                 'ends_at' => '2026-10-06T11:30:00',
             ])
             ->assertConflict()
-            ->assertJsonPath('errors.starts_at.0', 'Maria já tem atendimento das 10:00 às 11:00. Escolha outro horário ou outro responsável.');
+            ->assertJsonPath('errors.starts_at.0', 'Maria já tem 5 atendimentos ao mesmo tempo das 10:30 às 11:00. Escolha outro horário ou outro responsável.');
     }
 
     public function test_viewers_can_not_reschedule(): void

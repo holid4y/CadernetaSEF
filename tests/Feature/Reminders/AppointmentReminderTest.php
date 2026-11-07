@@ -13,6 +13,7 @@ use App\Models\Appointment;
 use App\Models\Client;
 use App\Models\Service;
 use App\Models\User;
+use App\Notifications\AppointmentConfirmation;
 use App\Notifications\AppointmentReminder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Notifications\ChannelManager;
@@ -221,7 +222,7 @@ class AppointmentReminderTest extends TestCase
         $this->assertNull(ReminderMessage::whatsAppUrl($this->appointmentAt('2026-10-06 10:00', ['phone' => '1234'])));
     }
 
-    public function test_a_rescheduled_appointment_is_reminded_of_the_new_time(): void
+    public function test_a_rescheduled_appointment_gets_the_new_time_by_e_mail(): void
     {
         $appointment = $this->appointmentAt('2026-10-06 10:00');
         $this->artisan('appointments:send-reminders');
@@ -234,7 +235,9 @@ class AppointmentReminderTest extends TestCase
         );
         $this->artisan('appointments:send-reminders');
 
-        Notification::assertSentToTimes($appointment->client, AppointmentReminder::class, 2);
+        // Moved this close to the date, the confirmation of the move is the new reminder.
+        Notification::assertSentTo($appointment->client, AppointmentConfirmation::class, fn (AppointmentConfirmation $mail): bool => $mail->moved);
+        Notification::assertSentToTimes($appointment->client, AppointmentReminder::class, 1);
     }
 
     public function test_changing_only_the_responsible_does_not_repeat_the_reminder(): void

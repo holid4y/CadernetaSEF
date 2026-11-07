@@ -169,13 +169,13 @@ class MobileCommandTest extends TestCase
 
     public function test_a_busy_slot_answers_409_with_the_explanation(): void
     {
-        Appointment::factory()->for($this->member, 'responsible')->between('2026-10-06 13:00', '2026-10-06 14:00')->create();
+        Appointment::factory()->count(5)->for($this->member, 'responsible')->between('2026-10-06 13:00', '2026-10-06 14:00')->create();
 
         $this->command('scheduleAppointment', [$this->bookingInput('2026-10-06 13:30', '2026-10-06 14:30')])
             ->assertConflict()
-            ->assertJsonPath('errors.start.0', 'Maria já tem atendimento das 10:00 às 11:00. Escolha outro horário ou outro responsável.');
+            ->assertJsonPath('errors.start.0', 'Maria já tem 5 atendimentos ao mesmo tempo das 10:30 às 11:00. Escolha outro horário ou outro responsável.');
 
-        $this->assertDatabaseCount('appointments', 1);
+        $this->assertDatabaseCount('appointments', 5);
     }
 
     public function test_an_inactive_service_can_not_be_booked(): void
@@ -360,7 +360,7 @@ class MobileCommandTest extends TestCase
     {
         $appointment = Appointment::factory()->for($this->member, 'responsible')->between('2026-10-06 13:00', '2026-10-06 14:00')->create();
         $this->command('changeStatus', [$appointment->id, 'cancelled'])->assertOk();
-        Appointment::factory()->for($this->member, 'responsible')->between('2026-10-06 13:00', '2026-10-06 14:00')->create();
+        Appointment::factory()->count(5)->for($this->member, 'responsible')->between('2026-10-06 13:00', '2026-10-06 14:00')->create();
 
         $this->command('restoreAppointment', [['id' => $appointment->id, 'status' => 'scheduled']])->assertConflict();
 

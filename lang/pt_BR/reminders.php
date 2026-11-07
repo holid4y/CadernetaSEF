@@ -14,6 +14,24 @@ return [
     'salutation' => 'Equipe do projeto Sustentabilidade Econômica e Financeira',
     'command_result' => '{0} Nenhum lembrete enviado.|{1} 1 lembrete enviado.|[2,*] :count lembretes enviados.',
 
+    'confirmation' => [
+        'subject' => 'Atendimento marcado para :date',
+        'subject_moved' => 'Seu atendimento mudou para :date',
+        'booked' => 'Seu atendimento no projeto foi marcado.',
+        'moved' => 'O horário do seu atendimento mudou. Confira o novo horário:',
+        'reminder_ahead' => '{1} Você também vai receber um lembrete 1 dia antes.|[2,*] Você também vai receber um lembrete :count dias antes.',
+    ],
+
+    'settings' => [
+        'title' => 'Lembretes por e-mail',
+        'lead' => 'Quem aceitou receber e-mails recebe a confirmação ao marcar e ao mudar o horário, e um lembrete antes do atendimento.',
+        'days' => 'Lembrete quantos dias antes',
+        'days_hint' => 'De 1 a :max dias. Vale para os próximos envios.',
+        'save' => 'Salvar',
+        'saved' => '{1} Lembrete passa a sair 1 dia antes.|[2,*] Lembrete passa a sair :count dias antes.',
+        'disabled' => 'O envio de e-mails está desligado neste servidor; a escolha vale quando for ligado.',
+    ],
+
     'page' => [
         'hello' => 'Olá, :name. Seu atendimento está marcado para',
         'service' => 'Serviço',
@@ -39,9 +57,8 @@ return [
     'card' => [
         'title' => 'Lembrete',
         'sent_at' => 'Enviado por e-mail em :date.',
-        'scheduled' => 'Será enviado por e-mail cerca de 24 horas antes.',
+        'scheduled' => '{1} Vai por e-mail 1 dia antes; a confirmação sai ao marcar e ao mudar o horário.|[2,*] Vai por e-mail :count dias antes; a confirmação sai ao marcar e ao mudar o horário.',
         'no_consent' => 'O atendido não autorizou lembretes.',
-        'inactive_client' => 'Este atendido está inativo.',
         'no_email' => 'Cadastre um e-mail válido para o lembrete automático, ou use o WhatsApp.',
         'send_now' => 'Enviar e-mail agora',
         'send_again' => 'Reenviar e-mail',

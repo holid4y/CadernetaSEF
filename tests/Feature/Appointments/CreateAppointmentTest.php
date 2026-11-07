@@ -124,16 +124,16 @@ class CreateAppointmentTest extends TestCase
 
     public function test_a_conflict_is_shown_on_the_form(): void
     {
-        Appointment::factory()->for($this->member, 'responsible')->between('2026-10-05 17:00', '2026-10-05 18:00')->create();
+        Appointment::factory()->count(5)->for($this->member, 'responsible')->between('2026-10-05 17:00', '2026-10-05 18:00')->create();
 
         Livewire::test(CreateAppointment::class, ['start' => '2026-10-05T14:30:00'])
             ->call('selectClient', Client::factory()->create()->id)
             ->set('service_id', Service::factory()->create()->id)
             ->call('save')
             ->assertHasErrors('starts_at')
-            ->assertSee('Maria já tem atendimento das 14:00 às 15:00');
+            ->assertSee('Maria já tem 5 atendimentos ao mesmo tempo das 14:30 às 15:00');
 
-        $this->assertSame(1, Appointment::query()->count());
+        $this->assertSame(5, Appointment::query()->count());
     }
 
     public function test_client_and_service_are_required(): void

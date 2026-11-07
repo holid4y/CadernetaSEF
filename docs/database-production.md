@@ -35,8 +35,7 @@ Arquivos em [`database/sql/`](../database/sql):
 - `privileges.sql`, rodado pelo dono depois de toda migration: concede o
   mínimo e define os privilégios padrão das tabelas futuras;
 - `verify.sql`, que qualquer papel roda e que não altera nada: confere
-  permissões, triggers, a exclusion constraint, `btree_gist` e se a conexão está
-  criptografada. Para com a lista do que estiver errado.
+  permissões, triggers, `btree_gist` e se a conexão está criptografada. Para com a lista do que estiver errado.
 
 `caderneta-database-setup` e `caderneta-deploy --migrate` executam os três na
 ordem certa.

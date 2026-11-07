@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Resources\Mobile;
 
+use App\Domain\Appointments\ReminderSchedule;
 use App\Models\Appointment;
 use App\Models\Client;
 use App\Models\GoogleEvent;
@@ -43,6 +44,7 @@ final class MobileState
                 Service::withTrashed()->with(['category:id,slug', 'documents'])->orderBy('sort_order')->orderBy('id')->get(),
             )->resolve($request),
             'appointments' => AppointmentResource::collection($appointments)->resolve($request),
+            'settings' => ['reminderDays' => ReminderSchedule::daysBefore()],
             'google' => GoogleStatus::for($request->user()),
             'googleEvents' => GoogleEvent::query()
                 ->pending()

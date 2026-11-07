@@ -165,10 +165,17 @@ ligar:
 4. confirmado o recebimento, esvazie `MAIL_ALWAYS_TO` e ligue
    `MAIL_REMINDERS_ENABLED=true`.
 
-Os lembretes automáticos saem uma vez por atendimento, cerca de 24 horas antes,
-só para atendidos com consentimento e e-mail válido. O job confere de novo ao
-rodar, então um atendimento cancelado ou um consentimento retirado entre o
-agendamento e o envio não recebe e-mail. Falhas tentam 3 vezes (1 e 5 minutos
+Só recebem e-mail atendidos com consentimento e e-mail válido:
+
+- a confirmação, ao marcar e quando o horário muda (trocar só o responsável
+  não manda nada);
+- o lembrete, uma vez por atendimento, alguns dias antes. Os dias (padrão 2,
+  de 1 a 14) ficam em Configurações, só para administradores. Marcado ou
+  remarcado já dentro desse prazo, a confirmação vale como lembrete.
+
+O job confere de novo ao rodar, então um atendimento cancelado, remarcado de
+novo ou um consentimento retirado entre o agendamento e o envio não recebe o
+e-mail antigo. Falhas tentam 3 vezes (1 e 5 minutos
 de intervalo) e depois ficam em `failed_jobs`:
 
 ```sh

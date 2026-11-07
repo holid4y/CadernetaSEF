@@ -57,6 +57,9 @@ export const isLegalEntity = (type) => type === 'organization' || type === 'ngo'
 
 export const MAX_APPOINTMENT_HOURS = 8;
 
+// One person can follow up to five clients at the same time.
+export const MAX_PARALLEL = 5;
+
 const IRPF_DOCUMENTS = [
     'Documento de identificação com CPF',
     'Comprovante de residência atualizado',

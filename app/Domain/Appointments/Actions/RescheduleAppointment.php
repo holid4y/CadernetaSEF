@@ -15,7 +15,10 @@ use Illuminate\Validation\ValidationException;
 // reports conflicts that do not exist.
 final class RescheduleAppointment
 {
-    public function __construct(private EnsureResponsibleIsAvailable $ensureResponsibleIsAvailable) {}
+    public function __construct(
+        private EnsureResponsibleIsAvailable $ensureResponsibleIsAvailable,
+        private SendAppointmentConfirmation $sendConfirmation,
+    ) {}
 
     public function handle(
         User $author,
@@ -72,6 +75,8 @@ final class RescheduleAppointment
                     ['starts_at' => $before['starts_at'], 'ends_at' => $before['ends_at']],
                     ['starts_at' => $appointment->starts_at->toIso8601String(), 'ends_at' => $appointment->ends_at->toIso8601String()],
                 );
+
+                $this->sendConfirmation->handle($appointment, moved: true);
             }
 
             if ($changesResponsible) {

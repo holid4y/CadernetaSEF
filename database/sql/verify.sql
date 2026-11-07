@@ -86,10 +86,6 @@ BEGIN
         problems := array_append(problems, 'extension btree_gist is missing');
     END IF;
 
-    IF NOT EXISTS (SELECT FROM pg_constraint WHERE conname = 'appointments_no_overlap' AND contype = 'x') THEN
-        problems := array_append(problems, 'exclusion constraint appointments_no_overlap is missing');
-    END IF;
-
     IF (SELECT count(*) FROM pg_trigger WHERE NOT tgisinternal AND tgenabled = 'O' AND tgname IN (
             'appointments_keep_rows', 'appointment_activities_append_only', 'appointment_activities_no_truncate',
             'data_audits_append_only', 'data_audits_no_truncate', 'clients_audit', 'users_audit')) <> 7 THEN

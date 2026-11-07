@@ -7,5 +7,5 @@ return [
     'agenda' => 'Agenda',
     'clients' => 'Atendidos',
     'impact' => 'Impacto',
-    'services' => 'Serviços',
+    'services' => 'Configurações',
 ];

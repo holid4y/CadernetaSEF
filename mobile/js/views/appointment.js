@@ -1,7 +1,7 @@
 import { emailLink, whatsappLink } from '../contacts.js';
 import { formAction, formsCard } from '../forms.js';
 import { googleCard, mountGoogleCard } from '../google.js';
-import { PROJECT, STATUS, TRANSITIONS } from '../data.js';
+import { MAX_PARALLEL, PROJECT, STATUS, TRANSITIONS } from '../data.js';
 import {
     appointmentOf,
     busyOn,
@@ -56,6 +56,9 @@ const reminderText = (state, appointment) => {
     return lines.filter((line) => line !== null).join('\n');
 };
 
+const reminderPlan = (days) =>
+    `Vai por e-mail ${days === 1 ? '1 dia' : `${days} dias`} antes; a confirmação sai ao marcar e ao mudar o horário.`;
+
 const reminderCard = (state, appointment, canWrite) => {
     const client = clientOf(state, appointment.clientId);
     const number = dialNumber(client.phone);
@@ -64,7 +67,7 @@ const reminderCard = (state, appointment, canWrite) => {
 
     const status = appointment.reminderSentAt
         ? `Enviado por e-mail em ${dateTime(appointment.reminderSentAt)}.`
-        : blocker ?? (open ? (store.isDemo ? 'O envio automático ficará disponível com o servidor.' : 'Lembrete automático configurado no servidor.') : 'Este atendimento não recebe mais lembretes.');
+        : blocker ?? (open ? (store.isDemo ? 'O envio automático ficará disponível com o servidor.' : reminderPlan(state.settings?.reminderDays ?? 2)) : 'Este atendimento não recebe mais lembretes.');
 
     const allowed = canWrite && client.active && client.acceptsReminders && open;
     const mail = allowed ? emailLink(client.email, 'Seu atendimento na Caderneta SEF', reminderText(state, appointment)) : null;
@@ -272,7 +275,7 @@ function openReschedule(appointment) {
             const check = () => {
                 const { start, end, responsibleId } = period();
                 const others = busyOn(state, responsibleId, form.date.value, appointment.id);
-                busy.textContent = others.length ? `Já ocupado neste dia: ${others.map((a) => `${timeStr(a.start)}–${timeStr(a.end)}`).join(', ')}.` : 'Nenhum outro atendimento deste responsável neste dia.';
+                busy.textContent = others.length ? `Outros atendimentos neste dia: ${others.map((a) => `${timeStr(a.start)}–${timeStr(a.end)}`).join(', ')}. Cabem até ${MAX_PARALLEL} ao mesmo tempo.` : 'Nenhum outro atendimento deste responsável neste dia.';
 
                 const conflict = end > start ? findConflict(state, { responsibleId, start, end, ignoreId: appointment.id }) : null;
                 problem.textContent = conflict ? conflictMessage(state, conflict) : end <= start ? 'O horário final precisa ser depois do horário inicial.' : '';

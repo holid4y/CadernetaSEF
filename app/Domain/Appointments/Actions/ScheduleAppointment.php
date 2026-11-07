@@ -23,7 +23,10 @@ final class ScheduleAppointment
         'service_details', 'location_type', 'location', 'notes',
     ];
 
-    public function __construct(private EnsureResponsibleIsAvailable $ensureResponsibleIsAvailable) {}
+    public function __construct(
+        private EnsureResponsibleIsAvailable $ensureResponsibleIsAvailable,
+        private SendAppointmentConfirmation $sendConfirmation,
+    ) {}
 
     /**
      * @param  array{
@@ -73,6 +76,8 @@ final class ScheduleAppointment
                 'responsible_user_id' => $responsible->id,
                 'service_id' => $service->id,
             ]);
+
+            $this->sendConfirmation->handle($appointment);
 
             return $appointment;
         });

@@ -29,7 +29,6 @@ use App\Models\User;
 use App\Support\ContactLinks;
 use Closure;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -94,13 +93,6 @@ class MobileCommandController extends Controller
             };
         } catch (ValidationException $error) {
             throw self::forTheApp($error);
-        } catch (QueryException $error) {
-            // The exclusion constraint is the last guard against double booking.
-            if ($error->getCode() !== '23P01') {
-                throw $error;
-            }
-
-            throw ValidationException::withMessages(['start' => __('appointments.errors.slot_taken')])->status(409);
         }
 
         return response()->json([
