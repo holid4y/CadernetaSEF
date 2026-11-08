@@ -12,14 +12,14 @@ class LayoutTest extends TestCase
 {
     use RefreshDatabase;
 
-    // Google Search Console proves with this file that the site belongs to the
-    // project, which the OAuth app verification depends on.
-    public function test_the_google_ownership_file_stays_in_place(): void
+    // Google Search Console proves with these files (one per Google account)
+    // that the site belongs to the project, which the OAuth app verification
+    // depends on.
+    public function test_the_google_ownership_files_stay_in_place(): void
     {
-        $this->assertSame(
-            'google-site-verification: google893461b29086d752.html',
-            file_get_contents(public_path('google893461b29086d752.html')),
-        );
+        foreach (['google893461b29086d752.html', 'google09cbdbce62360c38.html'] as $file) {
+            $this->assertSame("google-site-verification: {$file}", file_get_contents(public_path($file)));
+        }
     }
 
     public function test_every_page_has_the_project_icon(): void
