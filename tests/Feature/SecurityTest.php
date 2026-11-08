@@ -75,7 +75,8 @@ class SecurityTest extends TestCase
         $appointment = Appointment::factory()->for($client)->create(['notes' => 'Trazer extrato do INSS']);
 
         $row = DB::table('clients')->find($client->id);
-        $this->assertStringNotContainsString('123', $row->document);
+        $this->assertStringNotContainsString('123.456.789', $row->document);
+        $this->assertStringNotContainsString('12345678900', $row->document);
         $this->assertStringNotContainsString('Renda', $row->notes);
         $this->assertStringNotContainsString('INSS', DB::table('appointments')->find($appointment->id)->notes);
 

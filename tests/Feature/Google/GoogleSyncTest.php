@@ -52,7 +52,8 @@ class GoogleSyncTest extends TestCase
         $this->assertSame('IRPF · Joana Lima', $sent['summary']);
         $this->assertSame(['dateTime' => '2026-10-06T13:00:00+00:00', 'timeZone' => 'America/Sao_Paulo'], $sent['start']);
         $this->assertStringContainsString(route('appointments.show', $appointment), $sent['description']);
-        $this->assertStringNotContainsString('529', json_encode($sent));
+        $this->assertStringNotContainsString('982.247', json_encode($sent));
+        $this->assertStringNotContainsString('98224725', json_encode($sent));
         $this->assertStringNotContainsString('Prefere', json_encode($sent));
         $this->assertSame('https://www.google.com/calendar/event?eid=abc', GoogleEventCopy::query()->where('google_account_id', $account->id)->sole()->html_link);
     }

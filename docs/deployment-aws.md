@@ -162,6 +162,46 @@ novo. O `caderneta-check-db` já lê o `verify.sql` da versão em uso; o
 responder, a versão anterior volta sozinha. Rollback manual e demais cuidados:
 [operations.md](operations.md).
 
+## Trocar de domínio (Cloudflare)
+
+O site está em `cadernetasef.com.br`, registrado no Registro.br com DNS na
+Cloudflare. Para mudar de domínio sem derrubar quem usa o endereço antigo:
+
+1. Na Cloudflare, registros `A` do domínio para o IP da EC2 e `CNAME` do `www`
+   para o domínio, os dois em **DNS only** (nuvem cinza) até o fim do passo 3.
+2. No Google Cloud, adicione `https://<domínio>/google/retorno` aos URIs de
+   redirecionamento do cliente OAuth e o domínio às origens autorizadas e à
+   tela de consentimento. Mantenha os endereços antigos até a troca terminar.
+3. Na EC2, com a versão nova já publicada:
+
+   ```sh
+   sudo OTHER_NAMES="www.cadernetasef.com.br cadernetasef.duckdns.org" \
+       bash /var/www/caderneta-sef/current/deploy/aws/bin/provision.sh cadernetasef.com.br
+   sudo -u caderneta caderneta-deploy --ref main --with-pwa
+   ```
+
+   O primeiro comando emite um certificado para os três nomes, aponta o
+   `APP_URL` para o domínio novo e recarrega o Nginx. O segundo publica a
+   configuração e o PWA com o endereço novo. Nos nomes antigos, as páginas
+   redirecionam para o domínio; a API, os links de confirmação já enviados e os
+   arquivos que eles usam continuam respondendo, para o app instalado antes da
+   troca e para a plataforma de formulários.
+4. Gere o APK com `MOBILE_API_URL=https://<domínio>/api/v1` e avise a
+   plataforma de formulários do endereço novo.
+
+Se o proxy da Cloudflare for ligado (nuvem laranja), por exemplo para uma rede
+que bloqueie o IP da EC2:
+
+- em SSL/TLS, use **Full (strict)**. *Flexible* entra em loop de redirecionamento;
+- deixe **Always Use HTTPS** desligado na Cloudflare: o Nginx já redireciona,
+  e a renovação do certificado precisa da porta 80 sem desvio;
+- deixe desligados Rocket Loader, Email Address Obfuscation e a injeção do Web
+  Analytics: eles alteram o HTML e esbarram na política de segurança das páginas;
+- o Nginx já confia no cabeçalho `CF-Connecting-IP` só quando a conexão vem das
+  faixas da Cloudflare (`/etc/nginx/conf.d/caderneta-cloudflare.conf`, gravado
+  pelo `provision.sh`), então o limite de tentativas de login continua por
+  pessoa. Rode o `provision.sh` de novo se a Cloudflare publicar faixas novas.
+
 ## Apps Android e iOS
 
 Os projetos nativos usam o mesmo código do PWA.

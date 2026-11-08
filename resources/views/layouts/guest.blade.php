@@ -5,9 +5,9 @@
     </head>
     <body>
         <div class="mx-auto flex min-h-screen max-w-6xl flex-col px-4 sm:px-6 lg:px-8">
-            <header class="flex items-center justify-between gap-4 border-b border-line py-5">
-                <a href="{{ route('login') }}"><x-brand /></a>
-                <x-theme-toggle />
+            <header class="flex items-center justify-between gap-x-4 gap-y-3 border-b border-line py-5 max-[359px]:flex-wrap">
+                <a href="{{ route('login') }}"><x-brand wraps /></a>
+                <x-theme-toggle class="ms-auto shrink-0" />
             </header>
 
             <main class="grid flex-1 content-start gap-12 py-10 lg:grid-cols-[1fr_24rem] lg:content-center lg:gap-0 lg:py-16">
