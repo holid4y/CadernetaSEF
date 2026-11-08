@@ -15,6 +15,7 @@ return [
     'audience_label' => 'Atende',
     'audience' => 'Pessoas físicas, MEIs, pequenas empresas e entidades do terceiro setor do Vale do Rio dos Sinos',
     'footer' => 'Projeto de extensão do curso de Ciências Contábeis · Universidade Feevale',
+    'privacy' => 'Política de privacidade',
     'sign_in' => 'Entrar',
     'accounts_note' => 'As contas são criadas pela coordenação do projeto.',
 ];

@@ -2,7 +2,7 @@
     <article class="space-y-6 leading-relaxed">
         <header>
             <h1 class="text-4xl">Política de privacidade</h1>
-            <p class="mt-2 text-ink-muted">Caderneta SEF · atualizada em 31/10/2026</p>
+            <p class="mt-2 text-ink-muted">Caderneta SEF · atualizada em 08/11/2026</p>
         </header>
 
         <section class="space-y-2">
@@ -12,7 +12,7 @@
 
         <section class="space-y-2">
             <h2 class="text-2xl">Dados das pessoas atendidas</h2>
-            <p>Guardamos nome, CPF ou CNPJ, telefone, e-mail, os atendimentos marcados e os documentos pedidos para cada um. CPF/CNPJ e observações ficam criptografados. Esses dados servem só para organizar os atendimentos e enviar lembretes a quem autorizou recebê-los.</p>
+            <p>Guardamos nome, CPF ou CNPJ, telefone, e-mail, os atendimentos marcados e os documentos pedidos para cada um. CPF/CNPJ e observações ficam criptografados. Esses dados servem só para organizar os atendimentos e enviar confirmações e lembretes por e-mail a quem autorizou recebê-los.</p>
         </section>
 
         <section class="space-y-2">

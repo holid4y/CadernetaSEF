@@ -17,10 +17,11 @@ use App\Models\Service;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
+// Public on purpose: Google checks this page before verifying the app.
 Route::get('/', function () {
     return Auth::check()
         ? redirect()->route('dashboard')
-        : redirect()->route('login');
+        : view('home');
 })->name('home');
 
 Route::view('/privacidade', 'privacy')->name('privacy');

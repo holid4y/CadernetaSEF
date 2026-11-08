@@ -18,9 +18,16 @@ class AccessControlTest extends TestCase
         $this->get('/perfil')->assertRedirect(route('login'));
     }
 
-    public function test_root_redirects_guests_to_login(): void
+    public function test_guests_see_what_the_system_is_and_where_its_privacy_policy_is(): void
     {
-        $this->get('/')->assertRedirect(route('login'));
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('Caderneta SEF')
+            ->assertSee(route('login'))
+            ->assertSee(route('privacy'))
+            ->assertSee('Google Agenda');
+
+        $this->get('/login')->assertSee(route('privacy'));
     }
 
     public function test_root_redirects_authenticated_users_to_the_dashboard(): void

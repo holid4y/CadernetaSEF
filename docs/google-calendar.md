@@ -40,14 +40,15 @@ da SEF.
 2. Em APIs e serviços → Biblioteca, ative a Google Calendar API.
 3. Em APIs e serviços → Tela de consentimento OAuth (Google Auth Platform):
    tipo de usuário Externo, nome do app “Caderneta SEF”, e-mail de suporte, logo
-   opcional, domínio autorizado `cadernetasef.duckdns.org` e links para a página
-   inicial e a política de privacidade.
+   opcional, domínio autorizado `cadernetasef.com.br`, página inicial
+   `https://cadernetasef.com.br` e política de privacidade
+   `https://cadernetasef.com.br/privacidade`.
 4. Em Acesso a dados, adicione os escopos:
    `openid`, `.../auth/userinfo.email`, `.../auth/calendar.app.created`,
    `.../auth/calendar.calendarlist.readonly` e `.../auth/calendar.events.readonly`.
 5. Em Clientes, crie um ID do cliente OAuth do tipo Aplicativo da Web com o URI
    de redirecionamento autorizado exatamente igual a
-   `https://cadernetasef.duckdns.org/google/retorno`.
+   `https://cadernetasef.com.br/google/retorno`.
 6. Copie o ID e a chave secreta para o `.env` do servidor:
 
    ```dotenv
@@ -67,9 +68,48 @@ sete dias: a pessoa vê “O Google não aceita mais a conexão” e precisa con
 de novo. Para uso real, publique o app (“Em produção”). Os escopos de agenda
 são sensíveis, então, até o Google verificar o app, quem conecta vê o aviso
 “O Google não verificou este app” e precisa tocar em Avançado → Acessar. Esse
-modo atende até 100 pessoas, o que cobre a equipe. A verificação pede política
-de privacidade e domínio próprio, o que vale considerar se o projeto ganhar um
-domínio.
+modo atende até 100 pessoas, o que cobre a equipe.
+
+### Verificação do app
+
+Tira o aviso “O Google não verificou este app”. A análise dos escopos sensíveis
+costuma levar alguns dias úteis; o Google responde por e-mail ao endereço de
+contato do desenvolvedor.
+
+1. Domínio. Em https://search.google.com/search-console adicione a propriedade
+   do tipo Domínio `cadernetasef.com.br`, com a mesma conta Google dona do
+   projeto no Cloud. Copie o registro TXT que ele mostrar e crie-o na
+   Cloudflare (DNS → Records → Add record, tipo TXT, nome `@`). Depois de
+   verificado, o domínio aparece como autorizado na tela de consentimento.
+2. Branding (Google Auth Platform → Branding): página inicial
+   `https://cadernetasef.com.br` (pública, explica o sistema e tem link para a
+   política), política `https://cadernetasef.com.br/privacidade`, e-mail de
+   suporte e contato do desenvolvedor. O logo é opcional e, se enviado, também
+   passa por análise.
+3. Público: status “Em produção”.
+4. Acesso a dados: para cada escopo sensível, a justificativa (em inglês):
+
+   ```text
+   calendar.app.created — Each team member's appointments are kept in a
+   secondary calendar named "Caderneta SEF" that the app creates in their
+   account. The app only writes to that calendar.
+
+   calendar.calendarlist.readonly — The team member picks, from the list of
+   their calendars, the one the project already uses for appointments, so
+   its events can be brought into the app.
+
+   calendar.events.readonly — Events of the calendar the member picked are
+   read and shown in the app as appointments to complete (client and
+   service). Nothing is written to that calendar.
+   ```
+
+5. Vídeo de demonstração (YouTube, não listado), em inglês ou com legenda:
+   tela inicial com o link da política; login na Caderneta; Google Agenda →
+   Conectar, mostrando a tela de consentimento com o ID do cliente na barra de
+   endereço; a agenda “Caderneta SEF” criada no Google com um atendimento; a
+   escolha da agenda de origem e um evento dela aparecendo como “a completar”;
+   e Desconectar.
+6. Envie para verificação em Central de verificação.
 
 ## Como funciona por dentro
 

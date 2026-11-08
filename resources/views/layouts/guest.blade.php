@@ -39,7 +39,10 @@
                 </section>
             </main>
 
-            <footer class="border-t border-line py-5 text-sm text-ink-muted">{{ __('brand.footer') }}</footer>
+            <footer class="flex flex-wrap justify-between gap-x-6 gap-y-2 border-t border-line py-5 text-sm text-ink-muted">
+                <span>{{ __('brand.footer') }}</span>
+                <a href="{{ route('privacy') }}" class="underline underline-offset-4 hover:text-ink">{{ __('brand.privacy') }}</a>
+            </footer>
         </div>
 
         @if (session('farewell'))
