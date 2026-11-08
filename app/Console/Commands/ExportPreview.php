@@ -74,6 +74,7 @@ final class ExportPreview extends Command
         $login = $this->render($kernel, '/login', null, $base);
         $this->write($files, $output, '/', $login);
         $this->write($files, $output, '/login', $login);
+        $this->write($files, $output, '/privacidade', $this->render($kernel, '/privacidade', null, $base));
 
         $dashboard = $this->render($kernel, '/dashboard', $admin, $base);
         $this->write($files, $output, '/dashboard', $dashboard);
@@ -116,6 +117,7 @@ final class ExportPreview extends Command
             '/impacto',
             '/atendidos',
             '/atendidos/novo',
+            '/atendidos/importar',
             '/atendimentos/novo',
             '/perfil',
             '/configuracoes/servicos',

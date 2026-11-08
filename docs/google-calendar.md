@@ -142,10 +142,9 @@ contato do desenvolvedor.
 - Escopos estreitos em vez de `calendar`: o sistema só escreve na agenda que ele
   mesmo criou (`calendar.app.created`) e só lê a agenda escolhida. Uma falha na
   Caderneta não alcança o resto da agenda da pessoa.
-- Eventos do Google não viram atendimentos sozinhos: um evento não traz atendido,
-  serviço nem consentimento para lembretes, e o banco não aceita dois atendimentos
-  do mesmo responsável no mesmo horário. “A completar” mantém tudo visível sem
-  criar atendidos falsos.
+- Eventos do Google não viram atendimentos sozinhos: um evento não traz atendido
+  nem serviço, e cada responsável tem no máximo cinco atendimentos ao mesmo tempo.
+  “A completar” mantém tudo visível sem criar atendidos falsos.
 - A cópia do atendimento não volta para a agenda de onde o evento veio: quem
   importou já tem o evento original na conta, e o sistema não tem (nem pede)
   permissão para escrever nela.

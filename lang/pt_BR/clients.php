@@ -18,8 +18,8 @@ return [
         'phone' => 'Telefone / WhatsApp',
         'email' => 'E-mail',
         'notes' => 'Observações',
-        'accepts_reminders' => 'Aceita receber lembretes dos atendimentos',
-        'accepts_reminders_hint' => 'Só marque com a autorização do atendido (LGPD).',
+        'accepts_reminders' => 'Recebe confirmação e lembretes por e-mail',
+        'accepts_reminders_hint' => 'Vale para quem tem e-mail. Desmarque se a pessoa não quiser receber (LGPD).',
         'active' => 'Cadastro ativo',
     ],
 

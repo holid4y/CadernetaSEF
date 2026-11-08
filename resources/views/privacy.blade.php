@@ -12,7 +12,7 @@
 
         <section class="space-y-2">
             <h2 class="text-2xl">Dados das pessoas atendidas</h2>
-            <p>Guardamos nome, CPF ou CNPJ, telefone, e-mail, os atendimentos marcados e os documentos pedidos para cada um. CPF/CNPJ e observações ficam criptografados. Esses dados servem só para organizar os atendimentos e enviar confirmações e lembretes por e-mail a quem autorizou recebê-los.</p>
+            <p>Guardamos nome, CPF ou CNPJ, telefone, e-mail, os atendimentos marcados e os documentos pedidos para cada um. CPF/CNPJ e observações ficam criptografados. Esses dados servem só para organizar os atendimentos e enviar confirmações e lembretes por e-mail. Quem não quiser receber os e-mails é só avisar a equipe, e o envio para.</p>
         </section>
 
         <section class="space-y-2">

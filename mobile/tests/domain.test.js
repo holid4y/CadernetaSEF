@@ -262,7 +262,7 @@ test('client registration validates and de-duplicates', () => {
     assert.throws(() => saveClient(state, admin, { type: 'individual', name: 'Ana', email: 'ana@' }), /e-mail/);
     assert.throws(() => saveClient(state, admin, { type: 'individual', name: 'Ana', phone: '999' }), /telefone/);
     assert.throws(() => saveClient(state, admin, { type: 'individual', name: 'Ana', document: '111.111.111-11' }), /CPF/);
-    assert.throws(() => saveClient(state, admin, { type: 'individual', name: 'Ana', acceptsReminders: true }), /informe o e-mail/);
+    assert.equal(saveClient(state, admin, { type: 'individual', name: 'Sem E-mail', acceptsReminders: true }).acceptsReminders, false);
 
     const created = saveClient(state, admin, { type: 'individual', name: 'Ana Teste', document: '529.982.247-25', acceptsReminders: false });
     assert.equal(created.acceptsReminders, false);

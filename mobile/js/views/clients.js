@@ -200,8 +200,8 @@ export function clientFormBody(client = null, { compact = false } = {}) {
         </div>`
         }
         <label class="toggle-row">
-            <input type="checkbox" name="acceptsReminders" ${client?.acceptsReminders ? 'checked' : ''}>
-            <span>Aceita receber lembretes por e-mail<small>O atendido concordou em receber avisos antes do atendimento (LGPD).</small></span>
+            <input type="checkbox" name="acceptsReminders" ${client?.acceptsReminders ?? true ? 'checked' : ''}>
+            <span>Recebe confirmação e lembretes por e-mail<small>Vale para quem tem e-mail. Desmarque se a pessoa não quiser receber (LGPD).</small></span>
         </label>
         ${client ? `<label class="toggle-row"><input type="checkbox" name="active" ${client.active ? 'checked' : ''}><span>Atendido ativo<small>Inativos continuam no histórico, mas não aparecem para novos agendamentos.</small></span></label>` : ''}
         <p class="error-text" id="form-error" role="alert" hidden></p>

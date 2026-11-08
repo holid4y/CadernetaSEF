@@ -45,7 +45,7 @@ final class SaveClient
             'phone' => ($data['phone'] ?? null) ?: null,
             'email' => ($data['email'] ?? null) ?: null,
             'notes' => ($data['notes'] ?? null) ?: null,
-            'accepts_reminders' => (bool) ($data['accepts_reminders'] ?? false),
+            'accepts_reminders' => (bool) ($data['accepts_reminders'] ?? false) && filled($data['email'] ?? null),
             'active' => (bool) ($data['active'] ?? true),
         ]);
 

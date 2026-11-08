@@ -1,4 +1,4 @@
-const CACHE = 'agenda-contabil-v11';
+const CACHE = 'agenda-contabil-v12';
 
 const FILES = [
     './',

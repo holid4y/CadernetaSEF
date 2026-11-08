@@ -85,9 +85,8 @@ colunas; até 1000 atendidos por arquivo.
 - A prévia mostra cada linha e o motivo das que não vão entrar (CPF/CNPJ
   inválido, já cadastrado, repetido na planilha). Nada é gravado antes de
   clicar em Importar, e o mesmo arquivo não entra duas vezes.
-- Quem vier sem telefone nem e-mail entra marcado “Sem contato” e não recebe
-  lembretes até alguém completar o cadastro. Lembretes também começam
-  desligados para todos os importados: a planilha não registra consentimento.
+- Quem vier sem telefone nem e-mail entra marcado “Sem contato”. Quem veio com
+  e-mail recebe confirmação e lembretes; para parar, desmarque na ficha.
 
 ## Regras do dia a dia
 
@@ -165,7 +164,9 @@ ligar:
 4. confirmado o recebimento, esvazie `MAIL_ALWAYS_TO` e ligue
    `MAIL_REMINDERS_ENABLED=true`.
 
-Só recebem e-mail atendidos com consentimento e e-mail válido:
+Recebem e-mail os atendidos com endereço válido e a opção “Recebe confirmação e
+lembretes por e-mail” marcada na ficha. Ela vem marcada; quem não quiser receber
+pede à equipe para desmarcar:
 
 - a confirmação, ao marcar e quando o horário muda (trocar só o responsável
   não manda nada);

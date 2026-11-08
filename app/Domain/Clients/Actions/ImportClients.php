@@ -138,7 +138,7 @@ final class ImportClients
             'phone' => $phone,
             'email' => $email,
             'notes' => $notes === '' ? null : mb_substr($notes, 0, self::NOTES_LIMIT),
-            'accepts_reminders' => false,
+            'accepts_reminders' => $email !== null,
             'active' => true,
         ];
     }

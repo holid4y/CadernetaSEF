@@ -27,7 +27,7 @@ class ClientForm extends Form
 
     public string $notes = '';
 
-    public bool $accepts_reminders = false;
+    public bool $accepts_reminders = true;
 
     public bool $active = true;
 

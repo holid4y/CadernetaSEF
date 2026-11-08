@@ -39,6 +39,8 @@ class ExportPreviewTest extends TestCase
         $this->assertStringNotContainsString('http://example.github.io', $dashboard.$feed);
         $this->assertStringContainsString('data-preview', $dashboard);
         $this->assertFileExists(base_path("{$this->output}/index.html"));
+        $this->assertFileExists(base_path("{$this->output}/privacidade/index.html"));
+        $this->assertFileExists(base_path("{$this->output}/atendidos/importar/index.html"));
         $this->assertStringContainsString('"editable":false', $feed);
 
         $clients = file_get_contents(base_path("{$this->output}/atendidos/index.html"));

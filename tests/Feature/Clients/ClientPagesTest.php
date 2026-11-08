@@ -77,7 +77,25 @@ class ClientPagesTest extends TestCase
         $client = Client::query()->sole();
         $this->assertTrue($client->isOrganization());
         $this->assertSame('Amigos do Bairro', $client->trade_name);
-        $this->assertFalse($client->accepts_reminders);
+        $this->assertTrue($client->accepts_reminders);
+    }
+
+    public function test_e_mails_stay_off_for_who_declines_or_has_no_address(): void
+    {
+        Livewire::test(ClientEditor::class)
+            ->set('form.name', 'Sem E-mail')
+            ->set('form.phone', '(51) 99812-4410')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        Livewire::test(ClientEditor::class)
+            ->set('form.name', 'Preferiu Não')
+            ->set('form.email', 'nao@example.com')
+            ->set('form.accepts_reminders', false)
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertSame(0, Client::query()->where('accepts_reminders', true)->count());
     }
 
     public function test_an_ngo_is_registered_by_cnpj_and_listed_apart(): void

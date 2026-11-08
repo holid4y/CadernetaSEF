@@ -114,6 +114,14 @@ class ClientImportTest extends TestCase
         $this->assertDatabaseHas('clients', ['name' => 'Empresa Sem Contato', 'type' => 'organization', 'phone' => null, 'email' => null, 'accepts_reminders' => false]);
     }
 
+    public function test_who_came_with_an_e_mail_receives_the_messages(): void
+    {
+        $mapping = ['name', 'email'];
+
+        $this->assertTrue(ImportClients::buildInput(['NOME', 'E-MAIL'], ['Ana', 'ana@example.com'], $mapping, '51')['accepts_reminders']);
+        $this->assertFalse(ImportClients::buildInput(['NOME', 'E-MAIL'], ['Ana', ''], $mapping, '51')['accepts_reminders']);
+    }
+
     public function test_the_page_imports_once_and_marks_clients_without_contact(): void
     {
         $this->actingAs(User::factory()->create());

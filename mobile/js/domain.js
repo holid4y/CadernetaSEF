@@ -277,8 +277,7 @@ export function saveClient(state, actor, input, id = null, now = Date.now()) {
         if (duplicate) fail(`Esse documento já está cadastrado para ${duplicate.name}.`, 'document');
     }
 
-    const acceptsReminders = Boolean(input.acceptsReminders);
-    if (acceptsReminders && !email) fail('Para receber lembretes por e-mail, informe o e-mail do atendido.', 'email');
+    const acceptsReminders = Boolean(input.acceptsReminders) && Boolean(email);
 
     const values = {
         type,

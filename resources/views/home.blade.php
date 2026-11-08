@@ -19,7 +19,7 @@
             <ul class="list-disc space-y-1 ps-6">
                 <li>marca cada atendimento com dia, local e responsável;</li>
                 <li>mostra os documentos que a pessoa precisa trazer e confere, no dia, o que ela trouxe;</li>
-                <li>envia confirmação e lembrete por e-mail a quem autorizou recebê-los;</li>
+                <li>envia confirmação e lembrete a quem tem e-mail cadastrado e não pediu para ficar de fora;</li>
                 <li>reúne os números do projeto para os relatórios.</li>
             </ul>
         </section>
