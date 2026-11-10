@@ -19,6 +19,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Notification;
 use Livewire\Livewire;
+use RuntimeException;
 use Tests\TestCase;
 
 class AppointmentConfirmationTest extends TestCase
@@ -34,6 +35,19 @@ class AppointmentConfirmationTest extends TestCase
         Notification::fake();
         $this->travelTo('2026-10-05 12:00');
         $this->member = User::factory()->create();
+    }
+
+    public function test_a_confirmation_the_mail_server_refused_does_not_count_as_the_reminder(): void
+    {
+        $appointment = Appointment::factory()->create([
+            'starts_at' => now()->addDay(),
+            'ends_at' => now()->addDay()->addHour(),
+            'reminder_sent_at' => now(),
+        ]);
+
+        (new AppointmentConfirmation($appointment))->failed(new RuntimeException('refused'));
+
+        $this->assertNull($appointment->fresh()->reminder_sent_at);
     }
 
     public function test_booking_e_mails_a_confirmation_that_announces_the_reminder(): void

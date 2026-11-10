@@ -5,6 +5,9 @@ import { navigate } from '../router.js';
 import { store } from '../store.js';
 import { esc, firstName } from '../util.js';
 
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const WAIT_MS = 400;
+
 export default function login() {
     return {
         html: `<div class="login">
@@ -19,6 +22,9 @@ export default function login() {
                 <div class="field">
                     <label for="email">E-mail</label>
                     <input class="input" id="email" name="email" type="email" inputmode="email" autocomplete="username" value="${store.isDemo ? 'admin@agenda.local' : ''}" required>
+                    <div role="status">
+                        <p class="hint-text" id="awaiting-password" hidden>Esta conta ainda não tem senha. <button class="link small" type="button" id="create-password">Criar senha</button></p>
+                    </div>
                 </div>
                 <div class="field">
                     <label for="password">Senha</label>
@@ -37,6 +43,38 @@ export default function login() {
         mount(root) {
             const form = root.querySelector('#login-form');
             const error = root.querySelector('#login-error');
+            const hint = root.querySelector('#awaiting-password');
+            let typed = '';
+            let timer = null;
+
+            const emailChanged = () => {
+                const email = form.email.value.trim().toLowerCase();
+                if (email === typed) return;
+                clearTimeout(timer);
+                typed = email;
+                hint.hidden = true;
+                if (!EMAIL.test(email)) return;
+                timer = setTimeout(async () => {
+                    const awaiting = await store.awaitingPassword(email);
+                    if (email === typed) hint.hidden = !awaiting;
+                }, WAIT_MS);
+            };
+
+            const sendLink = async (button, sent) => {
+                if (!form.email.reportValidity()) return;
+                button.disabled = true;
+                try {
+                    await store.forgotPassword(form.email.value);
+                    toast(sent);
+                } catch (problem) {
+                    toast(problem.message);
+                } finally {
+                    button.disabled = false;
+                }
+            };
+
+            form.email.addEventListener('input', emailChanged);
+            form.email.addEventListener('change', emailChanged);
 
             form.addEventListener('submit', async (event) => {
                 event.preventDefault();
@@ -68,18 +106,13 @@ export default function login() {
                 playWelcome(firstName(user.name), originOf(button));
             });
 
-            root.querySelector('#forgot').addEventListener('click', async (event) => {
-                if (!form.email.reportValidity()) return;
-                event.currentTarget.disabled = true;
-                try {
-                    await store.forgotPassword(form.email.value);
-                    toast(store.isDemo ? 'Recuperação de senha disponível quando o servidor estiver conectado.' : 'Se o e-mail estiver cadastrado, você receberá as instruções para redefinir sua senha.');
-                } catch (problem) {
-                    toast(problem.message);
-                } finally {
-                    root.querySelector('#forgot').disabled = false;
-                }
-            });
+            root.querySelector('#forgot').addEventListener('click', (event) =>
+                sendLink(event.currentTarget, store.isDemo ? 'Recuperação de senha disponível quando o servidor estiver conectado.' : 'Se o e-mail estiver cadastrado, você receberá as instruções para redefinir sua senha.'),
+            );
+
+            root.querySelector('#create-password').addEventListener('click', (event) =>
+                sendLink(event.currentTarget, 'Enviamos um link para este e-mail. Abra a mensagem para criar sua senha.'),
+            );
         },
     };
 }

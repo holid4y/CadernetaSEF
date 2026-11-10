@@ -38,6 +38,8 @@ web ── sessão + CSRF ──────────────────
 - `POST /api/v1/logout` apaga só o token do aparelho (`204`).
 - `POST /api/v1/forgot-password` `{email}` responde a mesma mensagem para e-mails
   cadastrados ou não. O link abre a página de redefinição da web.
+- `POST /api/v1/account-status` `{email}` responde `{awaiting_password: bool}`,
+  verdadeiro só para conta ativa ainda sem senha. É o aviso da tela de login.
 - Não há cadastro público. Contas: `php artisan users:create`
   ([operations.md](operations.md)).
 - A sessão do navegador não abre a API: o Sanctum aceita apenas tokens

@@ -2,10 +2,12 @@
 import { Alpine, Livewire } from '../../vendor/livewire/livewire/dist/livewire.esm';
 import { startCurtains } from './curtain';
 import { trackNavigation } from './navigation';
+import passwordHint from './password-hint';
 import { startSmoothScroll } from './scroll';
 import themeToggle, { keepThemeAcrossPages } from './theme';
 
 Alpine.data('themeToggle', themeToggle);
+Alpine.data('passwordHint', passwordHint);
 
 let unmountAgenda = null;
 

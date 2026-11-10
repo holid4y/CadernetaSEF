@@ -16,6 +16,9 @@ autenticação própria. Consulte [o contrato implementado](../docs/forms-integr
 - `POST /forgot-password`: `{email}` → `200` com mensagem genérica. Enviar um
   link HTTPS para a página de redefinição de senha do servidor. A redefinição
   acontece nessa página; não depende de deep links para o app.
+- `POST /account-status`: `{email}` → `{awaiting_password: bool}`. Verdadeiro só
+  para conta ativa ainda sem senha; a tela de login pergunta enquanto o e-mail é
+  digitado. Limite de 30 pedidos por minuto.
 
 Todas as rotas abaixo exigem `Authorization: Bearer <token>`.
 O token fica somente em memória. Fechar/recarregar o app exige novo login.

@@ -30,7 +30,9 @@ test('server store authenticates, accepts authoritative data, rejects failed wri
             Response.json({ state: { ...state, clients: [{ id: 12 }] }, result: { id: 12 } }),
             Response.json({ message: 'Sessão expirada.' }, { status: 401 }),
         ];
-        globalThis.fetch = async (_, options) => {
+        let question = null;
+        globalThis.fetch = async (url, options) => {
+            if (question) return question(url, options);
             if (queue.length < 5) assert.equal(options.headers.Authorization, 'Bearer token');
             return queue.shift();
         };
@@ -48,6 +50,19 @@ test('server store authenticates, accepts authoritative data, rejects failed wri
         assert.equal(store.user, null);
         assert.equal(store.state.clients.length, 0);
         assert.equal(globalThis.location.hash, '/login');
+
+        const asked = [];
+        const answers = [Response.json({ awaiting_password: true }), Response.json({ awaiting_password: false }), Response.json({ message: 'Muitas tentativas.' }, { status: 429 })];
+        question = async (url, options) => {
+            asked.push([url, options.method, options.body]);
+            if (!answers.length) throw new TypeError('offline');
+            return answers.shift();
+        };
+        assert.equal(await store.awaitingPassword('maria@example.test'), true);
+        assert.deepEqual(asked[0], ['https://api.example.test/api/v1/account-status', 'POST', '{"email":"maria@example.test"}']);
+        assert.equal(await store.awaitingPassword('joana@example.test'), false);
+        assert.equal(await store.awaitingPassword('maria@example.test'), false, 'a refused question shows no message');
+        assert.equal(await store.awaitingPassword('maria@example.test'), false, 'no signal shows no message');
     } finally {
         for (const [key, descriptor] of Object.entries(previous)) {
             if (descriptor) Object.defineProperty(globalThis, key, descriptor);

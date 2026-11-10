@@ -15,7 +15,9 @@ use Illuminate\Validation\Rules\Password;
 // the old one stops working on every device.
 final class ResetUserPassword extends Command
 {
-    protected $signature = 'users:password {email : Login e-mail}';
+    protected $signature = 'users:password
+        {email : Login e-mail}
+        {--clear : Leave the account without a password, to be created from the login page}';
 
     protected $description = 'Set a new password for a staff account and sign it out everywhere';
 
@@ -27,6 +29,13 @@ final class ResetUserPassword extends Command
             $this->components->error('No account with this e-mail.');
 
             return self::FAILURE;
+        }
+
+        if ($this->option('clear')) {
+            $this->save($user, null);
+            $this->components->info("{$user->email} has no password now; other sessions were closed.");
+
+            return self::SUCCESS;
         }
 
         $validator = Validator::make([
@@ -42,16 +51,20 @@ final class ResetUserPassword extends Command
             return self::FAILURE;
         }
 
-        DB::transaction(function () use ($user, $validator): void {
+        $this->save($user, $validator->validated()['password']);
+        $this->components->info("New password saved for {$user->email}; other sessions were closed.");
+
+        return self::SUCCESS;
+    }
+
+    private function save(User $user, ?string $password): void
+    {
+        DB::transaction(function () use ($user, $password): void {
             $user->forceFill([
-                'password' => $validator->validated()['password'],
+                'password' => $password,
                 'remember_token' => Str::random(60),
             ])->save();
             $user->signOutEverywhere();
         });
-
-        $this->components->info("New password saved for {$user->email}; other sessions were closed.");
-
-        return self::SUCCESS;
     }
 }

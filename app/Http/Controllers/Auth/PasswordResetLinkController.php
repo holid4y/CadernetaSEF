@@ -12,9 +12,11 @@ use Illuminate\View\View;
 
 class PasswordResetLinkController extends Controller
 {
-    public function create(): View
+    public function create(Request $request): View
     {
-        return view('auth.forgot-password');
+        $email = $request->query('email');
+
+        return view('auth.forgot-password', ['email' => is_string($email) ? $email : null]);
     }
 
     public function store(Request $request): RedirectResponse

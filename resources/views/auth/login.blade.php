@@ -6,10 +6,16 @@
     <form method="POST" action="{{ route('login') }}" data-login-form x-data="{ sending: false }" x-on:submit="sending = true" class="mt-8 space-y-5">
         @csrf
 
-        <div>
+        <div x-data="passwordHint(@js(route('api.account-status')), @js(route('password.request')))">
             <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="mt-1 block w-full" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" />
+            <x-text-input id="email" x-ref="email" x-on:input="changed($event.target.value)" x-on:change="changed($event.target.value)" class="mt-1 block w-full" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" />
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
+            <div role="status">
+                <p x-show="awaiting" x-cloak class="mt-2 text-sm text-ink-muted">
+                    {{ __('auth.awaiting_password') }}
+                    <a x-bind:href="createLink" class="text-primary underline decoration-1 underline-offset-4 hover:text-primary-hover">{{ __('auth.create_password') }}</a>
+                </p>
+            </div>
         </div>
 
         <div>

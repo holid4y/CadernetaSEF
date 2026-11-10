@@ -105,12 +105,12 @@ A EC2 ainda não tem a aplicação instalada.
   - exposição mínima no app.
   
   Faltam política de retenção, exportação e exclusão a pedido do titular, e
-  anonimização (RNF-007).
+  anonimização.
 - Scripts de implantação foram conferidos (sintaxe, diagnóstico, backup e
   restauração na simulação), mas ainda não rodaram num Ubuntu 26.04 real. Pontos
   a observar na primeira vez:
   - versão do Node do Ubuntu;
   - `open_basedir` do pool do PHP-FPM, que pode ser afrouxado se algo legítimo
     for bloqueado.
-- Painel de impacto e relatórios na web (M5) e tela de usuários ainda
-  não existem.
+- A tela de usuários ainda não existe: as contas são geridas por comandos no
+  servidor.

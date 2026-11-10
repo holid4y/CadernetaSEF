@@ -129,16 +129,16 @@ class Appointment extends Model
         );
     }
 
-    /**
-     * @param  array<string, mixed>  $old
-     * @param  array<string, mixed>  $new
-     */
     // People bring their documents to the appointment, so the checklist opens on that day.
     public function documentsAreDue(): bool
     {
         return ! DisplayTimezone::toLocal($this->starts_at)->startOfDay()->isAfter(DisplayTimezone::toLocal(now()));
     }
 
+    /**
+     * @param  array<string, mixed>  $old
+     * @param  array<string, mixed>  $new
+     */
     public function recordActivity(ActivityType $type, ?User $user, array $old = [], array $new = []): AppointmentActivity
     {
         return $this->activities()->create([

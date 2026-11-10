@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Api\AccountStatusController;
 use App\Http\Controllers\Api\MobileCommandController;
 use App\Http\Controllers\Api\MobileGoogleController;
 use App\Http\Controllers\Api\MobilePasswordResetController;
@@ -26,6 +27,8 @@ Route::prefix('v1')->middleware(PreventCaching::class)->group(function (): void 
         Route::post('/login', [MobileSessionController::class, 'store'])->name('api.login');
         Route::post('/forgot-password', MobilePasswordResetController::class)->name('api.password.email');
     });
+
+    Route::post('/account-status', AccountStatusController::class)->middleware('throttle:30,1,api-account-status')->name('api.account-status');
 
     Route::middleware(['auth:sanctum', EnsureUserIsActive::class, SetDatabaseActor::class])->group(function (): void {
         Route::post('/logout', [MobileSessionController::class, 'destroy'])->name('api.logout');

@@ -67,6 +67,14 @@ class User extends Authenticatable
         $query->where('active', true)->where('role', '!=', UserRole::Viewer);
     }
 
+    /**
+     * @param  Builder<User>  $query
+     */
+    public function scopeAwaitingPassword(Builder $query): void
+    {
+        $query->where('active', true)->whereNull('password');
+    }
+
     // Ends the mobile tokens and the web sessions; the session in use can be kept.
     public function signOutEverywhere(?string $except = null): void
     {

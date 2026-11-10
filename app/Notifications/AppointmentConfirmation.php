@@ -52,8 +52,12 @@ final class AppointmentConfirmation extends Notification implements ShouldQueue
             && SendAppointmentReminder::canBeSent($current);
     }
 
+    // Close to the date this message counted as the reminder. Without it, the
+    // next run of the scheduler has to send one.
     public function failed(Throwable $error): void
     {
+        Appointment::query()->whereKey($this->appointment->id)->update(['reminder_sent_at' => null]);
+
         // The mail server's answer may quote the address, so only its type is logged.
         Log::warning('Appointment confirmation was not accepted by the mail server.', [
             'appointment_id' => $this->appointment->id,

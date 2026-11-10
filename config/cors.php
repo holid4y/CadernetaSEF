@@ -14,9 +14,9 @@ return [
     |
     */
 
-    'paths' => ['api/v1/login', 'api/v1/logout', 'api/v1/forgot-password', 'api/v1/mobile/*'],
+    'paths' => ['api/v1/login', 'api/v1/logout', 'api/v1/forgot-password', 'api/v1/account-status', 'api/v1/mobile/*', 'api/v1/google', 'api/v1/google/*'],
 
-    'allowed_methods' => ['GET', 'POST', 'OPTIONS'],
+    'allowed_methods' => ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
 
     'allowed_origins' => array_values(array_filter(array_map(
         fn (string $origin): string => rtrim(trim($origin), '/'),

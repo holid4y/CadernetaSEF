@@ -155,6 +155,27 @@ class MobileAuthenticationTest extends TestCase
         $preflight('https://site-qualquer.example')->assertHeaderMissing('Access-Control-Allow-Origin');
     }
 
+    public function test_the_native_apps_reach_every_route_they_call(): void
+    {
+        $routes = [
+            ['POST', '/api/v1/account-status'],
+            ['GET', '/api/v1/google'],
+            ['GET', '/api/v1/google/calendars'],
+            ['POST', '/api/v1/google/connect'],
+            ['PUT', '/api/v1/google'],
+            ['DELETE', '/api/v1/google'],
+        ];
+
+        foreach ($routes as [$method, $path]) {
+            $this->call('OPTIONS', $path, server: [
+                'HTTP_ORIGIN' => 'https://localhost',
+                'HTTP_ACCESS_CONTROL_REQUEST_METHOD' => $method,
+                'HTTP_ACCESS_CONTROL_REQUEST_HEADERS' => 'authorization,content-type',
+            ])->assertHeader('Access-Control-Allow-Origin', 'https://localhost')
+                ->assertHeader('Access-Control-Allow-Methods');
+        }
+    }
+
     public function test_an_e_mail_sent_as_a_list_is_a_validation_error(): void
     {
         $this->postJson('/api/v1/login', ['email' => ['maria@agenda.test'], 'password' => 'password', 'device_name' => 'app'])

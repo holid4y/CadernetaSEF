@@ -101,13 +101,14 @@ function cardAction(google, appointment, user, link) {
 
 export function mountGoogleCard(root) {
     root.querySelector('[data-google-connect]')?.addEventListener('click', async (event) => {
-        event.currentTarget.disabled = true;
+        const button = event.currentTarget;
+        button.disabled = true;
         try {
             await connectGoogle(root.querySelector('[data-google-fallback]'));
         } catch (error) {
             toast(error.message);
         } finally {
-            event.currentTarget.disabled = false;
+            button.disabled = false;
         }
     });
 }

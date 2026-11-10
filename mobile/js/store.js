@@ -151,6 +151,14 @@ export const store = {
         if (this.isDemo) return;
         await api.request('/forgot-password', { method: 'POST', body: { email } });
     },
+
+    // Asked while the e-mail is typed: a failure only means no message on the screen.
+    async awaitingPassword(email) {
+        if (this.isDemo) return false;
+        const answer = await api.request('/account-status', { method: 'POST', body: { email } }).catch(() => null);
+        return answer?.awaiting_password === true;
+    },
+
     get state() {
         return state;
     },

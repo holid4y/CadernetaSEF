@@ -111,7 +111,13 @@ artisan users:create pessoa@feevale.br "Nome da Pessoa" --role=member   # admin,
 artisan users:deactivate pessoa@feevale.br          # bloqueia, encerra sessões web e tokens do app
 artisan users:deactivate pessoa@feevale.br --undo   # devolve o acesso
 artisan users:password pessoa@feevale.br            # nova senha; encerra as outras sessões
+artisan users:create pessoa@feevale.br "Nome" --without-password   # a pessoa cria a senha pela tela de login
+artisan users:password pessoa@feevale.br --clear    # tira a senha; a pessoa cria outra pela tela de login
 ```
+
+Quem está sem senha vê um aviso discreto ao digitar o e-mail na tela de login,
+na web e no app, com o link para criar a senha. O aviso só aparece para contas
+ativas sem senha; e-mail com senha e e-mail inexistente recebem a mesma resposta.
 
 As senhas são digitadas sem eco. Em produção, precisam de 10+ caracteres com
 letras e números e não podem aparecer em vazamentos conhecidos (consulta

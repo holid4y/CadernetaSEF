@@ -19,14 +19,16 @@ final class CreateUser extends Command
     protected $signature = 'users:create
         {email : Login e-mail}
         {name : Name shown in the agenda}
-        {--role=member : admin, member or viewer}';
+        {--role=member : admin, member or viewer}
+        {--without-password : The person creates it from the login page}';
 
     protected $description = 'Create a staff account, asking for its password';
 
     public function handle(): int
     {
-        $password = (string) $this->secret('Password (at least 10 characters, letters and numbers)');
-        $confirmation = (string) $this->secret('Password again');
+        $withoutPassword = (bool) $this->option('without-password');
+        $password = $withoutPassword ? null : (string) $this->secret('Password (at least 10 characters, letters and numbers)');
+        $confirmation = $withoutPassword ? null : (string) $this->secret('Password again');
 
         $validator = Validator::make([
             'email' => mb_strtolower(trim((string) $this->argument('email'))),
@@ -38,7 +40,7 @@ final class CreateUser extends Command
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')],
             'name' => ['required', 'string', 'max:255'],
             'role' => ['required', Rule::enum(UserRole::class)],
-            'password' => ['required', 'confirmed', Password::defaults()],
+            'password' => $withoutPassword ? ['nullable'] : ['required', 'confirmed', Password::defaults()],
         ]);
 
         if ($validator->fails()) {
